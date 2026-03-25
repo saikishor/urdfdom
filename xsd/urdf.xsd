@@ -219,8 +219,8 @@
 
   <!-- safety controller node type -->
   <xs:complexType name="safety_controller">
-    <xs:attribute name="soft_lower_limit" type="xs:double" default="NaN" />
-    <xs:attribute name="soft_upper_limit" type="xs:double" default="NaN" />
+    <xs:attribute name="soft_lower_limit" type="xs:double" default="0" />
+    <xs:attribute name="soft_upper_limit" type="xs:double" default="0" />
     <xs:attribute name="k_position" type="xs:double" default="0" />
     <xs:attribute name="k_velocity" type="xs:double" use="required" />
   </xs:complexType>
