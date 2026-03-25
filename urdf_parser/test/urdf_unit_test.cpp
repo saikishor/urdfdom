@@ -581,6 +581,58 @@ TEST(URDF_UNIT_TEST, parse_joint_version_1_2_without_effort_velocity_sets_infini
   EXPECT_TRUE(std::isinf(urdf->joints_["j1"]->limits->velocity));
 }
 
+TEST(URDF_UNIT_TEST, parse_joint_version_1_2_revolute_without_upper_fails)
+{
+  std::string joint_str =
+    "<robot name=\"test\" version=\"1.2\">"
+    "  <link name=\"l1\"/>"
+    "  <link name=\"l2\"/>"
+    "  <joint name=\"j1\" type=\"revolute\">"
+    "    <parent link=\"l1\"/>"
+    "    <child link=\"l2\"/>"
+    "    <limit lower=\"-1.0\" effort=\"99.0\" velocity=\"23.0\"/>"
+    "  </joint>"
+    "</robot>";
+
+  urdf::ModelInterfaceSharedPtr urdf = urdf::parseURDF(joint_str);
+  EXPECT_EQ(nullptr, urdf);
+}
+
+TEST(URDF_UNIT_TEST, parse_joint_version_1_2_prismatic_without_lower_fails)
+{
+  std::string joint_str =
+    "<robot name=\"test\" version=\"1.2\">"
+    "  <link name=\"l1\"/>"
+    "  <link name=\"l2\"/>"
+    "  <joint name=\"j1\" type=\"prismatic\">"
+    "    <parent link=\"l1\"/>"
+    "    <child link=\"l2\"/>"
+    "    <axis xyz=\"1 0 0\"/>"
+    "    <limit upper=\"1.0\" effort=\"99.0\" velocity=\"23.0\"/>"
+    "  </joint>"
+    "</robot>";
+
+  urdf::ModelInterfaceSharedPtr urdf = urdf::parseURDF(joint_str);
+  EXPECT_EQ(nullptr, urdf);
+}
+
+TEST(URDF_UNIT_TEST, parse_joint_version_1_2_upper_smaller_than_lower_fails)
+{
+  std::string joint_str =
+    "<robot name=\"test\" version=\"1.2\">"
+    "  <joint name=\"j1\" type=\"fixed\">"
+    "    <parent link=\"l1\"/>"
+    "    <child link=\"l2\"/>"
+    "    <limit lower=\"2.0\" upper=\"1.0\" effort=\"99.0\" velocity=\"23.0\"/>"
+    "  </joint>"
+    "  <link name=\"l1\"/>"
+    "  <link name=\"l2\"/>"
+    "</robot>";
+
+  urdf::ModelInterfaceSharedPtr urdf = urdf::parseURDF(joint_str);
+  EXPECT_EQ(nullptr, urdf);
+}
+
 TEST(URDF_UNIT_TEST, parse_joint_version_1_2_negative_effort_fails)
 {
   std::string joint_str =
@@ -667,6 +719,189 @@ TEST(URDF_UNIT_TEST, parse_joint_version_1_0_without_lower_upper_defaults_zero)
   ASSERT_NE(nullptr, urdf);
   EXPECT_EQ(0.0, urdf->joints_["j1"]->limits->lower);
   EXPECT_EQ(0.0, urdf->joints_["j1"]->limits->upper);
+}
+
+TEST(URDF_UNIT_TEST, parse_joint_version_1_1_without_lower_upper_defaults_zero)
+{
+  // Version 1.1 omitting lower/upper should also default to 0.0 (same as v1.0)
+  std::string joint_str =
+    "<robot name=\"test\" version=\"1.1\">"
+    "  <joint name=\"j1\" type=\"fixed\">"
+    "    <parent link=\"l1\"/>"
+    "    <child link=\"l2\"/>"
+    "    <limit effort=\"99.0\" velocity=\"23.0\"/>"
+    "  </joint>"
+    "  <link name=\"l1\"/>"
+    "  <link name=\"l2\"/>"
+    "</robot>";
+
+  urdf::ModelInterfaceSharedPtr urdf = urdf::parseURDF(joint_str);
+
+  ASSERT_NE(nullptr, urdf);
+  EXPECT_EQ(0.0, urdf->joints_["j1"]->limits->lower);
+  EXPECT_EQ(0.0, urdf->joints_["j1"]->limits->upper);
+}
+
+TEST(URDF_UNIT_TEST, parse_joint_version_1_1_only_lower_omits_upper_defaults_zero)
+{
+  // Providing lower but omitting upper: upper should default to 0.0 in v1.1
+  std::string joint_str =
+    "<robot name=\"test\" version=\"1.1\">"
+    "  <joint name=\"j1\" type=\"fixed\">"
+    "    <parent link=\"l1\"/>"
+    "    <child link=\"l2\"/>"
+    "    <limit lower=\"-1.5\" effort=\"99.0\" velocity=\"23.0\"/>"
+    "  </joint>"
+    "  <link name=\"l1\"/>"
+    "  <link name=\"l2\"/>"
+    "</robot>";
+
+  urdf::ModelInterfaceSharedPtr urdf = urdf::parseURDF(joint_str);
+
+  ASSERT_NE(nullptr, urdf);
+  EXPECT_EQ(-1.5, urdf->joints_["j1"]->limits->lower);
+  EXPECT_EQ(0.0, urdf->joints_["j1"]->limits->upper);
+}
+
+TEST(URDF_UNIT_TEST, parse_joint_version_1_1_only_upper_omits_lower_defaults_zero)
+{
+  // Providing upper but omitting lower: lower should default to 0.0 in v1.1
+  std::string joint_str =
+    "<robot name=\"test\" version=\"1.1\">"
+    "  <joint name=\"j1\" type=\"fixed\">"
+    "    <parent link=\"l1\"/>"
+    "    <child link=\"l2\"/>"
+    "    <limit upper=\"2.5\" effort=\"99.0\" velocity=\"23.0\"/>"
+    "  </joint>"
+    "  <link name=\"l1\"/>"
+    "  <link name=\"l2\"/>"
+    "</robot>";
+
+  urdf::ModelInterfaceSharedPtr urdf = urdf::parseURDF(joint_str);
+
+  ASSERT_NE(nullptr, urdf);
+  EXPECT_EQ(0.0, urdf->joints_["j1"]->limits->lower);
+  EXPECT_EQ(2.5, urdf->joints_["j1"]->limits->upper);
+}
+
+TEST(URDF_UNIT_TEST, parse_joint_version_1_0_only_lower_omits_upper_defaults_zero)
+{
+  // Providing lower but omitting upper: upper should default to 0.0 in v1.0
+  std::string joint_str =
+    "<robot name=\"test\" version=\"1.0\">"
+    "  <joint name=\"j1\" type=\"fixed\">"
+    "    <parent link=\"l1\"/>"
+    "    <child link=\"l2\"/>"
+    "    <limit lower=\"-1.5\" effort=\"99.0\" velocity=\"23.0\"/>"
+    "  </joint>"
+    "  <link name=\"l1\"/>"
+    "  <link name=\"l2\"/>"
+    "</robot>";
+
+  urdf::ModelInterfaceSharedPtr urdf = urdf::parseURDF(joint_str);
+
+  ASSERT_NE(nullptr, urdf);
+  EXPECT_EQ(-1.5, urdf->joints_["j1"]->limits->lower);
+  EXPECT_EQ(0.0, urdf->joints_["j1"]->limits->upper);
+}
+
+TEST(URDF_UNIT_TEST, parse_joint_version_1_0_only_upper_omits_lower_defaults_zero)
+{
+  // Providing upper but omitting lower: lower should default to 0.0 in v1.0
+  std::string joint_str =
+    "<robot name=\"test\" version=\"1.0\">"
+    "  <joint name=\"j1\" type=\"fixed\">"
+    "    <parent link=\"l1\"/>"
+    "    <child link=\"l2\"/>"
+    "    <limit upper=\"2.5\" effort=\"99.0\" velocity=\"23.0\"/>"
+    "  </joint>"
+    "  <link name=\"l1\"/>"
+    "  <link name=\"l2\"/>"
+    "</robot>";
+
+  urdf::ModelInterfaceSharedPtr urdf = urdf::parseURDF(joint_str);
+
+  ASSERT_NE(nullptr, urdf);
+  EXPECT_EQ(0.0, urdf->joints_["j1"]->limits->lower);
+  EXPECT_EQ(2.5, urdf->joints_["j1"]->limits->upper);
+}
+
+TEST(URDF_UNIT_TEST, parse_joint_upper_less_than_lower_succeeds_v1_0)
+{
+  // upper < lower is only rejected from v1.2 onwards; v1.0 allows it
+  std::string joint_str =
+    "<robot name=\"test\" version=\"1.0\">"  
+    "  <joint name=\"j1\" type=\"fixed\">"  
+    "    <parent link=\"l1\"/>"  
+    "    <child link=\"l2\"/>"  
+    "    <limit lower=\"1.0\" upper=\"0.5\" effort=\"99.0\" velocity=\"23.0\"/>"  
+    "  </joint>"  
+    "  <link name=\"l1\"/>"  
+    "  <link name=\"l2\"/>"  
+    "</robot>";
+
+  urdf::ModelInterfaceSharedPtr urdf = urdf::parseURDF(joint_str);
+  ASSERT_NE(nullptr, urdf);
+  EXPECT_EQ(1.0, urdf->joints_["j1"]->limits->lower);
+  EXPECT_EQ(0.5, urdf->joints_["j1"]->limits->upper);
+}
+
+TEST(URDF_UNIT_TEST, parse_joint_upper_less_than_lower_succeeds_v1_1)
+{
+  // upper < lower is only rejected from v1.2 onwards; v1.1 allows it
+  std::string joint_str =
+    "<robot name=\"test\" version=\"1.1\">"  
+    "  <joint name=\"j1\" type=\"fixed\">"  
+    "    <parent link=\"l1\"/>"  
+    "    <child link=\"l2\"/>"  
+    "    <limit lower=\"2.0\" upper=\"1.0\" effort=\"99.0\" velocity=\"23.0\"/>"  
+    "  </joint>"  
+    "  <link name=\"l1\"/>"  
+    "  <link name=\"l2\"/>"  
+    "</robot>";
+
+  urdf::ModelInterfaceSharedPtr urdf = urdf::parseURDF(joint_str);
+  ASSERT_NE(nullptr, urdf);
+  EXPECT_EQ(2.0, urdf->joints_["j1"]->limits->lower);
+  EXPECT_EQ(1.0, urdf->joints_["j1"]->limits->upper);
+}
+
+TEST(URDF_UNIT_TEST, parse_joint_upper_less_than_lower_fails_v1_2)
+{
+  // upper < lower must be rejected in v1.2 as well
+  std::string joint_str =
+    "<robot name=\"test\" version=\"1.2\">"
+    "  <joint name=\"j1\" type=\"fixed\">"
+    "    <parent link=\"l1\"/>"
+    "    <child link=\"l2\"/>"
+    "    <limit lower=\"2.0\" upper=\"1.0\" effort=\"99.0\" velocity=\"23.0\"/>"
+    "  </joint>"
+    "  <link name=\"l1\"/>"
+    "  <link name=\"l2\"/>"
+    "</robot>";
+
+  urdf::ModelInterfaceSharedPtr urdf = urdf::parseURDF(joint_str);
+  EXPECT_EQ(nullptr, urdf);
+}
+
+TEST(URDF_UNIT_TEST, parse_joint_upper_equal_lower_succeeds)
+{
+  // upper == lower is valid (zero-range joint, e.g. a fixed position)
+  std::string joint_str =
+    "<robot name=\"test\" version=\"1.0\">"
+    "  <joint name=\"j1\" type=\"fixed\">"
+    "    <parent link=\"l1\"/>"
+    "    <child link=\"l2\"/>"
+    "    <limit lower=\"1.5\" upper=\"1.5\" effort=\"99.0\" velocity=\"23.0\"/>"
+    "  </joint>"
+    "  <link name=\"l1\"/>"
+    "  <link name=\"l2\"/>"
+    "</robot>";
+
+  urdf::ModelInterfaceSharedPtr urdf = urdf::parseURDF(joint_str);
+  ASSERT_NE(nullptr, urdf);
+  EXPECT_EQ(1.5, urdf->joints_["j1"]->limits->lower);
+  EXPECT_EQ(1.5, urdf->joints_["j1"]->limits->upper);
 }
 
 TEST(URDF_UNIT_TEST, parse_link_doubles)
