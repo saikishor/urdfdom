@@ -103,8 +103,16 @@ bool parseJointLimits(JointLimits &jl, tinyxml2::XMLElement* config,
   // Get lower joint limit
   const char* lower_str = config->Attribute("lower");
   if (lower_str == NULL){
-    CONSOLE_BRIDGE_logDebug("urdfdom.joint_limit: joint [%s] has no lower, defaults to 0", joint_name.c_str());
-    jl.lower = 0;
+    if (version.less_than(1, 2))
+    {
+      jl.lower = 0.0;
+    }
+    else
+    {
+      jl.lower = std::numeric_limits<double>::signaling_NaN();
+    }
+    CONSOLE_BRIDGE_logInform("urdfdom.joint_limit: joint [%s] has no lower, defaults to %f", joint_name.c_str(), jl.lower);
+    
   }
   else
   {
@@ -119,8 +127,15 @@ bool parseJointLimits(JointLimits &jl, tinyxml2::XMLElement* config,
   // Get upper joint limit
   const char* upper_str = config->Attribute("upper");
   if (upper_str == NULL){
-    CONSOLE_BRIDGE_logDebug("urdfdom.joint_limit: joint [%s] has no upper, defaults to 0", joint_name.c_str());
-    jl.upper = 0;
+    if (version.less_than(1, 2))
+    {
+      jl.upper = 0.0;
+    }
+    else
+    {
+      jl.upper = std::numeric_limits<double>::signaling_NaN();
+    }
+    CONSOLE_BRIDGE_logInform("urdfdom.joint_limit: joint [%s] has no upper position limit, defaults to %f", joint_name.c_str(), jl.upper);
   }
   else
   {
@@ -135,8 +150,16 @@ bool parseJointLimits(JointLimits &jl, tinyxml2::XMLElement* config,
   // Get joint effort limit
   const char* effort_str = config->Attribute("effort");
   if (effort_str == NULL){
-    CONSOLE_BRIDGE_logError("joint [%s]: limit has no effort", joint_name.c_str());
-    return false;
+    if (version.less_than(1, 2))
+    {
+      CONSOLE_BRIDGE_logError("joint [%s]: limit has no effort", joint_name.c_str());
+      return false;
+    }
+    else
+    {
+      jl.effort = std::numeric_limits<double>::infinity();
+      CONSOLE_BRIDGE_logInform("urdfdom.joint_limit: joint [%s] has no effort limit, defaults to %f", joint_name.c_str(), jl.effort);
+    }
   }
   else
   {
@@ -156,8 +179,16 @@ bool parseJointLimits(JointLimits &jl, tinyxml2::XMLElement* config,
   // Get joint velocity limit
   const char* velocity_str = config->Attribute("velocity");
   if (velocity_str == NULL){
-    CONSOLE_BRIDGE_logError("joint [%s]: limit has no velocity", joint_name.c_str());
-    return false;
+    if (version.less_than(1, 2))
+    {
+      CONSOLE_BRIDGE_logError("joint [%s]: limit has no velocity", joint_name.c_str());
+      return false;
+    }
+    else
+    {
+      jl.velocity = std::numeric_limits<double>::infinity();
+      CONSOLE_BRIDGE_logInform("urdfdom.joint_limit: joint [%s] has no velocity limit, defaults to %f", joint_name.c_str(), jl.velocity);
+    }
   }
   else
   {
