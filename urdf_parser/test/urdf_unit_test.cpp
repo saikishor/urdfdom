@@ -537,6 +537,138 @@ TEST(URDF_UNIT_TEST, parse_joint_version_1_2_invalid_acceleration_fails)
   EXPECT_EQ(nullptr, urdf);
 }
 
+TEST(URDF_UNIT_TEST, parse_joint_version_1_2_without_lower_upper_sets_nan)
+{
+  std::string joint_str =
+    "<robot name=\"test\" version=\"1.2\">"
+    "  <joint name=\"j1\" type=\"fixed\">"
+    "    <parent link=\"l1\"/>"
+    "    <child link=\"l2\"/>"
+    "    <limit effort=\"99.0\" velocity=\"23.0\"/>"
+    "  </joint>"
+    "  <link name=\"l1\"/>"
+    "  <link name=\"l2\"/>"
+    "</robot>";
+
+  urdf::ModelInterfaceSharedPtr urdf = urdf::parseURDF(joint_str);
+
+  ASSERT_NE(nullptr, urdf);
+  EXPECT_TRUE(std::isnan(urdf->joints_["j1"]->limits->lower));
+  EXPECT_TRUE(std::isnan(urdf->joints_["j1"]->limits->upper));
+  EXPECT_EQ(99.0, urdf->joints_["j1"]->limits->effort);
+  EXPECT_EQ(23.0, urdf->joints_["j1"]->limits->velocity);
+}
+
+TEST(URDF_UNIT_TEST, parse_joint_version_1_2_without_effort_velocity_sets_infinity)
+{
+  std::string joint_str =
+    "<robot name=\"test\" version=\"1.2\">"
+    "  <joint name=\"j1\" type=\"fixed\">"
+    "    <parent link=\"l1\"/>"
+    "    <child link=\"l2\"/>"
+    "    <limit lower=\"-1.0\" upper=\"1.0\"/>"
+    "  </joint>"
+    "  <link name=\"l1\"/>"
+    "  <link name=\"l2\"/>"
+    "</robot>";
+
+  urdf::ModelInterfaceSharedPtr urdf = urdf::parseURDF(joint_str);
+
+  ASSERT_NE(nullptr, urdf);
+  EXPECT_EQ(-1.0, urdf->joints_["j1"]->limits->lower);
+  EXPECT_EQ(1.0, urdf->joints_["j1"]->limits->upper);
+  EXPECT_TRUE(std::isinf(urdf->joints_["j1"]->limits->effort));
+  EXPECT_TRUE(std::isinf(urdf->joints_["j1"]->limits->velocity));
+}
+
+TEST(URDF_UNIT_TEST, parse_joint_version_1_2_negative_effort_fails)
+{
+  std::string joint_str =
+    "<robot name=\"test\" version=\"1.2\">"
+    "  <joint name=\"j1\" type=\"fixed\">"
+    "    <parent link=\"l1\"/>"
+    "    <child link=\"l2\"/>"
+    "    <limit effort=\"-1.0\" velocity=\"23.0\"/>"
+    "  </joint>"
+    "  <link name=\"l1\"/>"
+    "  <link name=\"l2\"/>"
+    "</robot>";
+
+  urdf::ModelInterfaceSharedPtr urdf = urdf::parseURDF(joint_str);
+  EXPECT_EQ(nullptr, urdf);
+}
+
+TEST(URDF_UNIT_TEST, parse_joint_version_1_2_negative_velocity_fails)
+{
+  std::string joint_str =
+    "<robot name=\"test\" version=\"1.2\">"
+    "  <joint name=\"j1\" type=\"fixed\">"
+    "    <parent link=\"l1\"/>"
+    "    <child link=\"l2\"/>"
+    "    <limit effort=\"99.0\" velocity=\"-23.0\"/>"
+    "  </joint>"
+    "  <link name=\"l1\"/>"
+    "  <link name=\"l2\"/>"
+    "</robot>";
+
+  urdf::ModelInterfaceSharedPtr urdf = urdf::parseURDF(joint_str);
+  EXPECT_EQ(nullptr, urdf);
+}
+
+TEST(URDF_UNIT_TEST, parse_joint_version_1_1_without_effort_fails)
+{
+  std::string joint_str =
+    "<robot name=\"test\" version=\"1.1\">"
+    "  <joint name=\"j1\" type=\"fixed\">"
+    "    <parent link=\"l1\"/>"
+    "    <child link=\"l2\"/>"
+    "    <limit velocity=\"23.0\"/>"
+    "  </joint>"
+    "  <link name=\"l1\"/>"
+    "  <link name=\"l2\"/>"
+    "</robot>";
+
+  urdf::ModelInterfaceSharedPtr urdf = urdf::parseURDF(joint_str);
+  EXPECT_EQ(nullptr, urdf);
+}
+
+TEST(URDF_UNIT_TEST, parse_joint_version_1_1_without_velocity_fails)
+{
+  std::string joint_str =
+    "<robot name=\"test\" version=\"1.1\">"
+    "  <joint name=\"j1\" type=\"fixed\">"
+    "    <parent link=\"l1\"/>"
+    "    <child link=\"l2\"/>"
+    "    <limit effort=\"99.0\"/>"
+    "  </joint>"
+    "  <link name=\"l1\"/>"
+    "  <link name=\"l2\"/>"
+    "</robot>";
+
+  urdf::ModelInterfaceSharedPtr urdf = urdf::parseURDF(joint_str);
+  EXPECT_EQ(nullptr, urdf);
+}
+
+TEST(URDF_UNIT_TEST, parse_joint_version_1_0_without_lower_upper_defaults_zero)
+{
+  std::string joint_str =
+    "<robot name=\"test\" version=\"1.0\">"
+    "  <joint name=\"j1\" type=\"fixed\">"
+    "    <parent link=\"l1\"/>"
+    "    <child link=\"l2\"/>"
+    "    <limit effort=\"99.0\" velocity=\"23.0\"/>"
+    "  </joint>"
+    "  <link name=\"l1\"/>"
+    "  <link name=\"l2\"/>"
+    "</robot>";
+
+  urdf::ModelInterfaceSharedPtr urdf = urdf::parseURDF(joint_str);
+
+  ASSERT_NE(nullptr, urdf);
+  EXPECT_EQ(0.0, urdf->joints_["j1"]->limits->lower);
+  EXPECT_EQ(0.0, urdf->joints_["j1"]->limits->upper);
+}
+
 TEST(URDF_UNIT_TEST, parse_link_doubles)
 {
   std::string joint_str =
