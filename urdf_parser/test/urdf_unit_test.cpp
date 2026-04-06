@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "urdf_model/pose.h"
-#include "urdf_parser/urdf_parser.h"
+#include "urdf_parser/urdf_parser.hpp"
 
 #ifndef M_PI
   # define M_PI 3.141592653589793

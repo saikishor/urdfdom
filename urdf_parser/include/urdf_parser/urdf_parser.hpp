@@ -34,8 +34,8 @@
 
 /* Author: Wim Meeussen */
 
-#ifndef URDF_PARSER_URDF_PARSER_H
-#define URDF_PARSER_URDF_PARSER_H
+#ifndef URDF_PARSER_URDF_PARSER_HPP
+#define URDF_PARSER_URDF_PARSER_HPP
 
 #include <cstdint>
 #include <stdexcept>
@@ -48,7 +48,7 @@
 #include <urdf_sensor/sensor.h>
 #include <urdf_model/types.h>
 
-#include "exportdecl.h"
+#include "exportdecl.hpp"
 
 namespace tinyxml2{
   // Forward declaration for APIs that use TinyXML2 structures.
@@ -176,4 +176,4 @@ namespace urdf{
   URDFDOM_DLLAPI ModelInterfaceSharedPtr parseURDFFile(const std::string &path);
 }
 
-#endif
+#endif // URDF_PARSER_URDF_PARSER_HPP
