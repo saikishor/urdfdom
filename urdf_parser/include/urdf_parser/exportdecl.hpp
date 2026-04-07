@@ -35,7 +35,7 @@
 /* Author: Thomas Moulard */
 
 #ifndef URDFDOM_EXPORTDECL_HPP
-# define URDFDOM_EXPORTDECL_HPP
+#define URDFDOM_EXPORTDECL_HPP
 
 // Handle portable symbol export.
 // Defining manually which symbol should be exported is required
