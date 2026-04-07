@@ -36,5 +36,9 @@
  * This header exists for backwards compatibility.
  * Please include urdf_parser.hpppp instead.
  */
-#pragma once
-#include <urdf_parser/urdf_parser.hpppp>
+#ifndef URDF_PARSER_URDF_PARSER_H
+#define URDF_PARSER_URDF_PARSER_H
+
+#include <urdf_parser/urdf_parser.hpp>
+
+#endif // URDF_PARSER_URDF_PARSER_H

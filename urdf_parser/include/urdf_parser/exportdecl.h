@@ -36,5 +36,9 @@
  * This header exists for backwards compatibility.
  * Please include exportdecl.hpp instead.
  */
-#pragma once
+#ifndef URDFDOM_EXPORTDECL_H
+#define URDFDOM_EXPORTDECL_H
+
 #include <urdf_parser/exportdecl.hpp>
+
+#endif //! URDFDOM_EXPORTDECL_H
