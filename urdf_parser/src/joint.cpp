@@ -111,7 +111,7 @@ bool parseJointLimits(JointLimits &jl, tinyxml2::XMLElement* config,
     }
     else
     {
-      jl.lower = std::numeric_limits<double>::signaling_NaN();
+      jl.lower = -std::numeric_limits<double>::infinity();
     }
     CONSOLE_BRIDGE_logInform("urdfdom.joint_limit: joint [%s] has no lower, defaults to %f", joint_name.c_str(), jl.lower);
     lower_pos_limit = false;
@@ -135,7 +135,7 @@ bool parseJointLimits(JointLimits &jl, tinyxml2::XMLElement* config,
     }
     else
     {
-      jl.upper = std::numeric_limits<double>::signaling_NaN();
+      jl.upper = std::numeric_limits<double>::infinity();
     }
     CONSOLE_BRIDGE_logInform("urdfdom.joint_limit: joint [%s] has no upper position limit, defaults to %f", joint_name.c_str(), jl.upper);
     upper_pos_limit = false;

@@ -111,7 +111,7 @@ Version 1.2 extends the URDF specification with extended joint limits:
 - **Jerk limit**: The `jerk` attribute specifies the maximum joint jerk (rate of change of acceleration)
 
 Version 1.2 also relaxes some requirements on the existing joint limit attributes:
-- `lower` and `upper` are optional for non-`revolute`/non-`prismatic` joints and default to `NaN` when omitted
+- `lower` and `upper` are optional for non-`revolute`/non-`prismatic` joints and default to `-infinity` and `infinity` when omitted
 - for `revolute` and `prismatic` joints, both `lower` and `upper` must be provided
 - `effort` and `velocity` become optional and default to infinity when omitted
 - `effort`, `velocity`, `acceleration`, `deceleration`, and `jerk` must all be non-negative when provided
@@ -145,13 +145,13 @@ The parser keeps legacy behavior for older URDF versions and only applies the re
 
 | Attribute | Version 1.0 / 1.1 | Version 1.2 |
 |-----------|-------------------|-------------|
-| `lower` | Optional, defaults to `0.0` when omitted | Optional for non-revolute/non-prismatic joints, defaults to `NaN` when omitted |
-| `upper` | Optional, defaults to `0.0` when omitted | Optional for non-revolute/non-prismatic joints, defaults to `NaN` when omitted |
-| `effort` | Required, parsing fails if omitted | Optional, defaults to infinity when omitted |
-| `velocity` | Required, parsing fails if omitted | Optional, defaults to infinity when omitted |
-| `acceleration` | Ignored with warning if provided | Optional, defaults to infinity when omitted |
+| `lower` | Optional, defaults to `0.0` when omitted | Optional for non-revolute/non-prismatic joints, defaults to `-infinity` when omitted |
+| `upper` | Optional, defaults to `0.0` when omitted | Optional for non-revolute/non-prismatic joints, defaults to `infinity` when omitted |
+| `effort` | Required, parsing fails if omitted | Optional, defaults to `infinity` when omitted |
+| `velocity` | Required, parsing fails if omitted | Optional, defaults to `infinity` when omitted |
+| `acceleration` | Ignored with warning if provided | Optional, defaults to `infinity` when omitted |
 | `deceleration` | Ignored with warning if provided | Optional, defaults to `acceleration` if set, otherwise infinity |
-| `jerk` | Ignored with warning if provided | Optional, defaults to infinity when omitted |
+| `jerk` | Ignored with warning if provided | Optional, defaults to `infinity` when omitted |
 
 For all supported versions, invalid numeric values still fail parsing. In version 1.2, negative values for `effort`, `velocity`, `acceleration`, `deceleration`, and `jerk` are rejected.
 In version 1.2, `revolute` and `prismatic` joints additionally require both `lower` and `upper`, and `upper` cannot be smaller than `lower`.

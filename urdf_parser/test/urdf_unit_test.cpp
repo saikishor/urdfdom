@@ -537,7 +537,7 @@ TEST(URDF_UNIT_TEST, parse_joint_version_1_2_invalid_acceleration_fails)
   EXPECT_EQ(nullptr, urdf);
 }
 
-TEST(URDF_UNIT_TEST, parse_joint_version_1_2_without_lower_upper_sets_nan)
+TEST(URDF_UNIT_TEST, parse_joint_version_1_2_without_lower_upper_sets_infinity)
 {
   std::string joint_str =
     "<robot name=\"test\" version=\"1.2\">"
@@ -553,8 +553,10 @@ TEST(URDF_UNIT_TEST, parse_joint_version_1_2_without_lower_upper_sets_nan)
   urdf::ModelInterfaceSharedPtr urdf = urdf::parseURDF(joint_str);
 
   ASSERT_NE(nullptr, urdf);
-  EXPECT_TRUE(std::isnan(urdf->joints_["j1"]->limits->lower));
-  EXPECT_TRUE(std::isnan(urdf->joints_["j1"]->limits->upper));
+  EXPECT_TRUE(std::isinf(urdf->joints_["j1"]->limits->lower));
+  EXPECT_LT(urdf->joints_["j1"]->limits->lower, 0.0);
+  EXPECT_TRUE(std::isinf(urdf->joints_["j1"]->limits->upper));
+  EXPECT_GT(urdf->joints_["j1"]->limits->upper, 0.0);
   EXPECT_EQ(99.0, urdf->joints_["j1"]->limits->effort);
   EXPECT_EQ(23.0, urdf->joints_["j1"]->limits->velocity);
 }
