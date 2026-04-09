@@ -39,6 +39,12 @@
 #ifndef URDF_PARSER_URDF_PARSER_H
 #define URDF_PARSER_URDF_PARSER_H
 
+#if defined(_MSC_VER)
+    #pragma message("warning: urdfdom/urdf_parser.h is deprecated. Please use urdfdom/urdf_parser.hpp instead.")
+#else
+    #warning urdfdom/urdf_parser.h is deprecated. Please use urdfdom/urdf_parser.hpp instead.
+#endif
+
 #include <urdf_parser/urdf_parser.hpp>
 
 #endif // URDF_PARSER_URDF_PARSER_H
