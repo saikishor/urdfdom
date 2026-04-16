@@ -40,9 +40,9 @@
 #define URDFDOM_EXPORTDECL_H
 
 #if defined(_MSC_VER)
-    #pragma message("warning: urdfdom/exportdecl.h is deprecated. Please use urdfdom/exportdecl.hpp instead.")
+    #pragma message("warning: urdf_parser/exportdecl.h is deprecated. Please use urdf_parser/exportdecl.hpp instead.")
 #else
-    #warning urdfdom/exportdecl.h is deprecated. Please use urdfdom/exportdecl.hpp instead.
+    #warning urdf_parser/exportdecl.h is deprecated. Please use urdf_parser/exportdecl.hpp instead.
 #endif
 
 #include <urdf_parser/exportdecl.hpp>
