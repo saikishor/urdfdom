@@ -35,7 +35,7 @@
 /* Author: John Hsu */
 
 
-#include <urdf_sensor/sensor.h>
+#include <urdf_sensor/sensor.hpp>
 #include <fstream>
 #include <locale>
 #include <sstream>

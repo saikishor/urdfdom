@@ -36,7 +36,7 @@
 
 
 #include <urdf_parser/urdf_parser.hpp>
-#include <urdf_model/link.h>
+#include <urdf_model/link.hpp>
 #include <fstream>
 #include <locale>
 #include <sstream>

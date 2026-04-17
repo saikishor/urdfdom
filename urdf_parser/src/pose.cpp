@@ -35,7 +35,7 @@
 /* Author: Wim Meeussen, John Hsu */
 
 
-#include <urdf_model/pose.h>
+#include <urdf_model/pose.hpp>
 #include <fstream>
 #include <sstream>
 #include <algorithm>

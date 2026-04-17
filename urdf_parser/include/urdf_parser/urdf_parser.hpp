@@ -42,11 +42,11 @@
 #include <string>
 #include <vector>
 
-#include <urdf_model/model.h>
-#include <urdf_model/color.h>
-#include <urdf_model/utils.h>
-#include <urdf_sensor/sensor.h>
-#include <urdf_model/types.h>
+#include <urdf_model/model.hpp>
+#include <urdf_model/color.hpp>
+#include <urdf_model/utils.hpp>
+#include <urdf_sensor/sensor.hpp>
+#include <urdf_model/types.hpp>
 
 #include "exportdecl.hpp"
 

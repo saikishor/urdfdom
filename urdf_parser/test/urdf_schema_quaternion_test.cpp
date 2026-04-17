@@ -4,7 +4,7 @@
 #include <cmath>
 #include <vector>
 
-#include "urdf_model/pose.h"
+#include "urdf_model/pose.hpp"
 #include "urdf_parser/urdf_parser.hpp"
 
 TEST(URDF_UNIT_TEST, parse_rot_rpy_version_1_0)

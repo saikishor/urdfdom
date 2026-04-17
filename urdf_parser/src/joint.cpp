@@ -38,7 +38,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
-#include <urdf_model/joint.h>
+#include <urdf_model/joint.hpp>
 #include <console_bridge/console.h>
 #include <tinyxml2.h>
 #include <urdf_parser/urdf_parser.hpp>
