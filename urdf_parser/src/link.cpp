@@ -584,6 +584,15 @@ bool exportCylinder(Cylinder &y, tinyxml2::XMLElement *xml)
   return true;
 }
 
+bool exportCapsule(Capsule &c, tinyxml2::XMLElement *xml)
+{
+  tinyxml2::XMLElement *capsule_xml = xml->GetDocument()->NewElement("capsule");
+  capsule_xml->SetAttribute("radius", urdf_export_helpers::values2str(c.radius).c_str());
+  capsule_xml->SetAttribute("length", urdf_export_helpers::values2str(c.length).c_str());
+  xml->LinkEndChild(capsule_xml);
+  return true;
+}
+
 bool exportMesh(Mesh &m, tinyxml2::XMLElement *xml)
 {
   // e.g. add <mesh filename="my_file" scale="1 1 1"/>
@@ -613,6 +622,10 @@ bool exportGeometry(GeometrySharedPtr &geom, tinyxml2::XMLElement *xml)
   else if (urdf::dynamic_pointer_cast<Mesh>(geom))
   {
     exportMesh((*(urdf::dynamic_pointer_cast<Mesh>(geom).get())), geometry_xml);
+  }
+  else if (urdf::dynamic_pointer_cast<Capsule>(geom))
+  {
+    exportCapsule((*(urdf::dynamic_pointer_cast<Capsule>(geom).get())), geometry_xml);
   }
   else
   {
