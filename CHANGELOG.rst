@@ -2,6 +2,18 @@
 Changelog for package urdfdom
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+5.1.1 (2026-04-15)
+------------------
+
+* Prevent CI from failing fast to allow all builds to complete (`#254 <https://github.com/ros/urdfdom/issues/254>`_)
+* Remove ``urdf_world/types.h`` deprecation (`#251 <https://github.com/ros/urdfdom/issues/251>`_)
+* Extend parsing of acceleration, deceleration and jerk limits from ``limit`` tag (`#212 <https://github.com/ros/urdfdom/issues/212>`_)
+* ROS 2 CI: build urdfdom_headers from source (`#246 <https://github.com/ros/urdfdom/issues/246>`_)
+* Disable system workflow because ``urdfdom_headers`` isn't available on Ubuntu 24.04 (`#240 <https://github.com/ros/urdfdom/issues/240>`_)
+* Fix ROS 2 CI workflow by updating Ubuntu version and checkout action (`#239 <https://github.com/ros/urdfdom/issues/239>`_)
+
+* Contributors: Alejandro Hernández Cordero, Sai Kishor Kothakota, Steve Peters
+
 5.1.0 (2026-02-06)
 ------------------
 * Support for URDF Specification 1.1

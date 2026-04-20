@@ -107,7 +107,8 @@ bool parseMaterial(Material &material, tinyxml2::XMLElement *config, bool only_n
 }
 
 
-bool parseSphere(Sphere &s, tinyxml2::XMLElement *c)
+bool parseSphere(Sphere &s, tinyxml2::XMLElement *c,
+                 const urdf_export_helpers::URDFVersion version)
 {
   s.clear();
 
@@ -127,10 +128,17 @@ bool parseSphere(Sphere &s, tinyxml2::XMLElement *c)
     return false;
   }
 
+  if (version.at_least(1, 2) && (!std::isfinite(s.radius) || s.radius <= 0))
+  {
+    CONSOLE_BRIDGE_logError("Sphere radius must be a positive finite value");
+    return false;
+  }
+
   return true;
 }
 
-bool parseBox(Box &b, tinyxml2::XMLElement *c)
+bool parseBox(Box &b, tinyxml2::XMLElement *c,
+              const urdf_export_helpers::URDFVersion version)
 {
   b.clear();
 
@@ -150,10 +158,20 @@ bool parseBox(Box &b, tinyxml2::XMLElement *c)
     CONSOLE_BRIDGE_logError("%s", e.what());
     return false;
   }
+
+  const bool are_dim_finite = std::isfinite(b.dim.x) && std::isfinite(b.dim.y) && std::isfinite(b.dim.z);
+  const bool are_dim_positive = b.dim.x > 0 && b.dim.y > 0 && b.dim.z > 0;
+  if (version.at_least(1, 2) && (!are_dim_finite || !are_dim_positive))
+  {
+    CONSOLE_BRIDGE_logError("Box size must be positive finite values");
+    return false;
+  }
+
   return true;
 }
 
-bool parseCylinder(Cylinder &y, tinyxml2::XMLElement *c)
+bool parseCylinder(Cylinder &y, tinyxml2::XMLElement *c,
+                   const urdf_export_helpers::URDFVersion version)
 {
   y.clear();
 
@@ -180,6 +198,13 @@ bool parseCylinder(Cylinder &y, tinyxml2::XMLElement *c)
     std::stringstream stm;
     stm << "radius [" << c->Attribute("radius") << "] is not a valid float";
     CONSOLE_BRIDGE_logError("%s", stm.str().c_str());
+    return false;
+  }
+
+  if (version.at_least(1, 2) &&
+      (!std::isfinite(y.length) || !std::isfinite(y.radius) || y.length <= 0 || y.radius <= 0))
+  {
+    CONSOLE_BRIDGE_logError("Cylinder length and radius must be positive finite values");
     return false;
   }
 
@@ -216,7 +241,8 @@ bool parseMesh(Mesh &m, tinyxml2::XMLElement *c)
   return true;
 }
 
-bool parseCapsule(Capsule &c, tinyxml2::XMLElement *elem)
+bool parseCapsule(Capsule &c, tinyxml2::XMLElement *elem,
+                  const urdf_export_helpers::URDFVersion version)
 {
   c.clear();
 
@@ -246,6 +272,13 @@ bool parseCapsule(Capsule &c, tinyxml2::XMLElement *elem)
     return false;
   }
 
+  if (version.at_least(1, 2) &&
+      (!std::isfinite(c.length) || !std::isfinite(c.radius) || c.length <= 0 || c.radius <= 0))
+  {
+    CONSOLE_BRIDGE_logError("Capsule length and radius must be positive finite values");
+    return false;
+  }
+
   return true;
 }
 
@@ -267,21 +300,21 @@ GeometrySharedPtr parseGeometry(tinyxml2::XMLElement *g,
   {
     Sphere *s = new Sphere();
     geom.reset(s);
-    if (parseSphere(*s, shape))
+    if (parseSphere(*s, shape, version))
       return geom;
   }
   else if (type_name == "box")
   {
     Box *b = new Box();
     geom.reset(b);
-    if (parseBox(*b, shape))
+    if (parseBox(*b, shape, version))
       return geom;
   }
   else if (type_name == "cylinder")
   {
     Cylinder *c = new Cylinder();
     geom.reset(c);
-    if (parseCylinder(*c, shape))
+    if (parseCylinder(*c, shape, version))
       return geom;
   }
   else if (type_name == "mesh")
@@ -300,7 +333,7 @@ GeometrySharedPtr parseGeometry(tinyxml2::XMLElement *g,
     else {
       Capsule *c = new Capsule();
       geom.reset(c);
-      if (parseCapsule(*c, shape))
+      if (parseCapsule(*c, shape, version))
         return geom;
     }
   }
