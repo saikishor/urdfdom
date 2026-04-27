@@ -18,6 +18,7 @@ set(tests
      urdf_double_convert.cpp
      urdf_schema_capsule_geometry_test.cpp
      urdf_schema_quaternion_test.cpp
+     urdf_schema_v1_0_legacy_test.cpp
      urdf_unit_test.cpp
      urdf_version_test.cpp
 )
