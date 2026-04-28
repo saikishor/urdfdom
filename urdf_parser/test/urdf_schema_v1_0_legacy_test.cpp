@@ -336,6 +336,73 @@ TEST(URDF_V1_0_LEGACY, box_geometry_no_size_attr_fails)
   ASSERT_NE(nullptr, model);
   EXPECT_TRUE(model->getLink("base")->visual_array.empty());
 }
+
+TEST(URDF_V1_0_LEGACY, sphere_geometry_positive_value)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="base">
+        <visual><geometry><sphere radius="0.75"/></geometry></visual>
+      </link>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  auto link = model->getLink("base");
+  ASSERT_FALSE(link->visual_array.empty());
+  auto sphere = std::dynamic_pointer_cast<urdf::Sphere>(link->visual_array[0]->geometry);
+  ASSERT_NE(nullptr, sphere);
+  EXPECT_DOUBLE_EQ(0.75, sphere->radius);
+}
+
+TEST(URDF_V1_0_LEGACY, sphere_geometry_large_radius_allowed_v1_0)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="base">
+        <visual><geometry><sphere radius="1e6"/></geometry></visual>
+      </link>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  auto sphere = std::dynamic_pointer_cast<urdf::Sphere>(
+    model->getLink("base")->visual_array[0]->geometry);
+  ASSERT_NE(nullptr, sphere);
+  EXPECT_DOUBLE_EQ(1e6, sphere->radius);
+}
+
+TEST(URDF_V1_0_LEGACY, sphere_geometry_negative_radius_allowed_v1_0)
+{
+  // v1.0 applies no sign validation on geometry dimensions.
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="base">
+        <visual><geometry><sphere radius="-0.5"/></geometry></visual>
+      </link>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  auto sphere = std::dynamic_pointer_cast<urdf::Sphere>(
+    model->getLink("base")->visual_array[0]->geometry);
+  ASSERT_NE(nullptr, sphere);
+  EXPECT_DOUBLE_EQ(-0.5, sphere->radius);
+}
+
+TEST(URDF_V1_0_LEGACY, sphere_geometry_no_radius_attr_fails)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="base">
+        <visual><geometry><sphere/></geometry></visual>
+      </link>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  EXPECT_TRUE(model->getLink("base")->visual_array.empty());
+}
 int main(int argc, char **argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
