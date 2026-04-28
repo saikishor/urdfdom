@@ -282,6 +282,44 @@ TEST(URDF_V1_0_LEGACY, inertial_with_origin)
   EXPECT_NEAR(-0.2, link->inertial->origin.position.y, 1e-9);
   EXPECT_NEAR(0.3,  link->inertial->origin.position.z, 1e-9);
 }
+
+/// @note Geometry – all supported types in v1.0
+TEST(URDF_V1_0_LEGACY, box_geometry_positive_values)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="base">
+        <visual>
+          <geometry><box size="1.0 2.0 3.0"/></geometry>
+        </visual>
+      </link>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  auto link = model->getLink("base");
+  ASSERT_FALSE(link->visual_array.empty());
+  EXPECT_EQ(urdf::Geometry::BOX, link->visual_array[0]->geometry->type);
+  auto box = std::dynamic_pointer_cast<urdf::Box>(link->visual_array[0]->geometry);
+  ASSERT_NE(nullptr, box);
+  EXPECT_DOUBLE_EQ(1.0, box->dim.x);
+  EXPECT_DOUBLE_EQ(2.0, box->dim.y);
+  EXPECT_DOUBLE_EQ(3.0, box->dim.z);
+}
+
+TEST(URDF_V1_0_LEGACY, box_geometry_zero_dimension_allowed_v1_0)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="base">
+        <visual><geometry><box size="1.0 0.0 3.0"/></geometry></visual>
+      </link>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  EXPECT_FALSE(model->getLink("base")->visual_array.empty());
+}
 int main(int argc, char **argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
