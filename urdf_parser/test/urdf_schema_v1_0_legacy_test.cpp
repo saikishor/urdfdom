@@ -489,6 +489,99 @@ TEST(URDF_V1_0_LEGACY, cylinder_geometry_no_radius_attr_fails)
   ASSERT_NE(nullptr, model);
   EXPECT_TRUE(model->getLink("base")->visual_array.empty());
 }
+
+TEST(URDF_V1_0_LEGACY, mesh_geometry_with_filename)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="base">
+        <visual>
+          <geometry>
+            <mesh filename="package://my_pkg/meshes/base.dae"/>
+          </geometry>
+        </visual>
+      </link>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  auto mesh = std::dynamic_pointer_cast<urdf::Mesh>(
+    model->getLink("base")->visual_array[0]->geometry);
+  ASSERT_NE(nullptr, mesh);
+  EXPECT_EQ("package://my_pkg/meshes/base.dae", mesh->filename);
+}
+
+TEST(URDF_V1_0_LEGACY, mesh_geometry_default_scale_is_one)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="base">
+        <visual>
+          <geometry><mesh filename="my_mesh.stl"/></geometry>
+        </visual>
+      </link>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  auto mesh = std::dynamic_pointer_cast<urdf::Mesh>(
+    model->getLink("base")->visual_array[0]->geometry);
+  ASSERT_NE(nullptr, mesh);
+  EXPECT_DOUBLE_EQ(1.0, mesh->scale.x);
+  EXPECT_DOUBLE_EQ(1.0, mesh->scale.y);
+  EXPECT_DOUBLE_EQ(1.0, mesh->scale.z);
+}
+
+TEST(URDF_V1_0_LEGACY, mesh_geometry_with_explicit_scale)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="base">
+        <visual>
+          <geometry>
+            <mesh filename="my_mesh.stl" scale="0.001 0.001 0.001"/>
+          </geometry>
+        </visual>
+      </link>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  auto mesh = std::dynamic_pointer_cast<urdf::Mesh>(
+    model->getLink("base")->visual_array[0]->geometry);
+  ASSERT_NE(nullptr, mesh);
+  EXPECT_DOUBLE_EQ(0.001, mesh->scale.x);
+  EXPECT_DOUBLE_EQ(0.001, mesh->scale.y);
+  EXPECT_DOUBLE_EQ(0.001, mesh->scale.z);
+}
+
+TEST(URDF_V1_0_LEGACY, mesh_geometry_no_filename_fails)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="base">
+        <visual><geometry><mesh/></geometry></visual>
+      </link>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  EXPECT_TRUE(model->getLink("base")->visual_array.empty());
+}
+
+TEST(URDF_V1_0_LEGACY, unknown_geometry_type_fails)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="base">
+        <visual><geometry><torus radius="1.0"/></geometry></visual>
+      </link>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  EXPECT_TRUE(model->getLink("base")->visual_array.empty());
+}
 int main(int argc, char **argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
