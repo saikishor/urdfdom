@@ -320,6 +320,22 @@ TEST(URDF_V1_0_LEGACY, box_geometry_zero_dimension_allowed_v1_0)
   ASSERT_NE(nullptr, model);
   EXPECT_FALSE(model->getLink("base")->visual_array.empty());
 }
+
+TEST(URDF_V1_0_LEGACY, box_geometry_no_size_attr_fails)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="base">
+        <visual><geometry><box/></geometry></visual>
+      </link>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  // parseVisual fails → parseLink returns false → but model still built (link added).
+  // The link exists but has no visual.
+  ASSERT_NE(nullptr, model);
+  EXPECT_TRUE(model->getLink("base")->visual_array.empty());
+}
 int main(int argc, char **argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
