@@ -403,6 +403,92 @@ TEST(URDF_V1_0_LEGACY, sphere_geometry_no_radius_attr_fails)
   ASSERT_NE(nullptr, model);
   EXPECT_TRUE(model->getLink("base")->visual_array.empty());
 }
+
+TEST(URDF_V1_0_LEGACY, cylinder_geometry_positive_values)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="base">
+        <visual>
+          <geometry><cylinder radius="0.4" length="1.2"/></geometry>
+        </visual>
+      </link>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  auto cyl = std::dynamic_pointer_cast<urdf::Cylinder>(
+    model->getLink("base")->visual_array[0]->geometry);
+  ASSERT_NE(nullptr, cyl);
+  EXPECT_DOUBLE_EQ(0.4, cyl->radius);
+  EXPECT_DOUBLE_EQ(1.2, cyl->length);
+}
+
+TEST(URDF_V1_0_LEGACY, cylinder_geometry_negative_radius_allowed_v1_0)
+{
+  // v1.0 applies no sign validation on geometry dimensions.
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="base">
+        <visual><geometry><cylinder radius="-0.4" length="1.2"/></geometry></visual>
+      </link>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  auto cyl = std::dynamic_pointer_cast<urdf::Cylinder>(
+    model->getLink("base")->visual_array[0]->geometry);
+  ASSERT_NE(nullptr, cyl);
+  EXPECT_DOUBLE_EQ(-0.4, cyl->radius);
+  EXPECT_DOUBLE_EQ( 1.2, cyl->length);
+}
+
+TEST(URDF_V1_0_LEGACY, cylinder_geometry_negative_length_allowed_v1_0)
+{
+  // v1.0 applies no sign validation on geometry dimensions.
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="base">
+        <visual><geometry><cylinder radius="0.4" length="-1.2"/></geometry></visual>
+      </link>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  auto cyl = std::dynamic_pointer_cast<urdf::Cylinder>(
+    model->getLink("base")->visual_array[0]->geometry);
+  ASSERT_NE(nullptr, cyl);
+  EXPECT_DOUBLE_EQ( 0.4, cyl->radius);
+  EXPECT_DOUBLE_EQ(-1.2, cyl->length);
+}
+
+TEST(URDF_V1_0_LEGACY, cylinder_geometry_no_length_attr_fails)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="base">
+        <visual><geometry><cylinder radius="0.5"/></geometry></visual>
+      </link>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  EXPECT_TRUE(model->getLink("base")->visual_array.empty());
+}
+
+TEST(URDF_V1_0_LEGACY, cylinder_geometry_no_radius_attr_fails)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="base">
+        <visual><geometry><cylinder length="1.0"/></geometry></visual>
+      </link>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  EXPECT_TRUE(model->getLink("base")->visual_array.empty());
+}
 int main(int argc, char **argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
