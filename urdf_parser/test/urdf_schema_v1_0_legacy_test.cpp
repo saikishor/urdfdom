@@ -723,6 +723,116 @@ TEST(URDF_V1_0_LEGACY, visual_and_collision_in_same_link)
   EXPECT_EQ(urdf::Geometry::SPHERE, link->visual->geometry->type);
   EXPECT_EQ(urdf::Geometry::BOX,    link->collision->geometry->type);
 }
+
+/// @note Material parsing
+TEST(URDF_V1_0_LEGACY, global_material_with_color)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <material name="blue">
+        <color rgba="0.0 0.0 1.0 1.0"/>
+      </material>
+      <link name="base">
+        <visual>
+          <geometry><sphere radius="0.1"/></geometry>
+          <material name="blue"/>
+        </visual>
+      </link>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  auto mat = model->getMaterial("blue");
+  ASSERT_NE(nullptr, mat);
+  EXPECT_FLOAT_EQ(0.0f, static_cast<float>(mat->color.r));
+  EXPECT_FLOAT_EQ(0.0f, static_cast<float>(mat->color.g));
+  EXPECT_FLOAT_EQ(1.0f, static_cast<float>(mat->color.b));
+  EXPECT_FLOAT_EQ(1.0f, static_cast<float>(mat->color.a));
+}
+
+TEST(URDF_V1_0_LEGACY, global_material_with_texture)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <material name="checker">
+        <texture filename="package://my_pkg/textures/checker.png"/>
+      </material>
+      <link name="base">
+        <visual>
+          <geometry><sphere radius="0.1"/></geometry>
+          <material name="checker"/>
+        </visual>
+      </link>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  auto mat = model->getMaterial("checker");
+  ASSERT_NE(nullptr, mat);
+  EXPECT_EQ("package://my_pkg/textures/checker.png", mat->texture_filename);
+}
+
+TEST(URDF_V1_0_LEGACY, duplicate_global_material_fails)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <material name="red"><color rgba="1 0 0 1"/></material>
+      <material name="red"><color rgba="0.8 0 0 1"/></material>
+      <link name="base"/>
+    </robot>
+  )urdf";
+  EXPECT_EQ(nullptr, urdf::parseURDF(urdf_str));
+}
+
+TEST(URDF_V1_0_LEGACY, inline_material_definition_in_visual)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="base">
+        <visual>
+          <geometry><sphere radius="0.1"/></geometry>
+          <material name="green_ish">
+            <color rgba="0.1 0.9 0.1 0.5"/>
+          </material>
+        </visual>
+      </link>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  ASSERT_FALSE(model->getLink("base")->visual_array.empty());
+  auto vis = model->getLink("base")->visual_array[0];
+  ASSERT_NE(nullptr, vis->material);
+  EXPECT_EQ("green_ish", vis->material->name);
+  EXPECT_FLOAT_EQ(0.1f, static_cast<float>(vis->material->color.r));
+  EXPECT_FLOAT_EQ(0.9f, static_cast<float>(vis->material->color.g));
+  EXPECT_FLOAT_EQ(0.5f, static_cast<float>(vis->material->color.a));
+}
+
+TEST(URDF_V1_0_LEGACY, visual_color_rgba_boundary_values)
+{
+  // Test rgba with 0.0 and 1.0 boundary values
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="base">
+        <visual>
+          <geometry><sphere radius="0.1"/></geometry>
+          <material name="">
+            <color rgba="0.0 1.0 0.0 1.0"/>
+          </material>
+        </visual>
+      </link>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  auto vis = model->getLink("base")->visual_array[0];
+  ASSERT_NE(nullptr, vis->material);
+  EXPECT_FLOAT_EQ(0.0f, static_cast<float>(vis->material->color.r));
+  EXPECT_FLOAT_EQ(1.0f, static_cast<float>(vis->material->color.g));
+  EXPECT_FLOAT_EQ(0.0f, static_cast<float>(vis->material->color.b));
+  EXPECT_FLOAT_EQ(1.0f, static_cast<float>(vis->material->color.a));
+}
 int main(int argc, char **argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
