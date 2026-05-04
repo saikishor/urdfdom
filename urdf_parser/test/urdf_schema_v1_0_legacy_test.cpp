@@ -953,6 +953,179 @@ TEST(URDF_V1_0_LEGACY, quat_xyzw_ignored_in_v1_0)
   EXPECT_DOUBLE_EQ(0.0, z);
   EXPECT_DOUBLE_EQ(1.0, w);
 }
+
+/// @note Joint types
+TEST(URDF_V1_0_LEGACY, revolute_joint_with_limits)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="l1"/>
+      <link name="l2"/>
+      <joint name="j1" type="revolute">
+        <parent link="l1"/>
+        <child link="l2"/>
+        <limit lower="-1.57" upper="1.57" effort="100.0" velocity="2.0"/>
+      </joint>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  EXPECT_EQ(urdf::Joint::REVOLUTE, model->getJoint("j1")->type);
+  ASSERT_NE(nullptr, model->getJoint("j1")->limits);
+  EXPECT_DOUBLE_EQ(-1.57,  model->getJoint("j1")->limits->lower);
+  EXPECT_DOUBLE_EQ( 1.57,  model->getJoint("j1")->limits->upper);
+  EXPECT_DOUBLE_EQ(100.0,  model->getJoint("j1")->limits->effort);
+  EXPECT_DOUBLE_EQ(  2.0,  model->getJoint("j1")->limits->velocity);
+}
+
+TEST(URDF_V1_0_LEGACY, revolute_joint_without_limits_fails)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="l1"/>
+      <link name="l2"/>
+      <joint name="j1" type="revolute">
+        <parent link="l1"/>
+        <child link="l2"/>
+      </joint>
+    </robot>
+  )urdf";
+  EXPECT_EQ(nullptr, urdf::parseURDF(urdf_str));
+}
+
+TEST(URDF_V1_0_LEGACY, prismatic_joint_with_limits)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="l1"/>
+      <link name="l2"/>
+      <joint name="j1" type="prismatic">
+        <parent link="l1"/>
+        <child link="l2"/>
+        <axis xyz="0 0 1"/>
+        <limit lower="-0.5" upper="0.5" effort="50.0" velocity="0.5"/>
+      </joint>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  EXPECT_EQ(urdf::Joint::PRISMATIC, model->getJoint("j1")->type);
+}
+
+TEST(URDF_V1_0_LEGACY, prismatic_joint_without_limits_fails)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="l1"/>
+      <link name="l2"/>
+      <joint name="j1" type="prismatic">
+        <parent link="l1"/>
+        <child link="l2"/>
+      </joint>
+    </robot>
+  )urdf";
+  EXPECT_EQ(nullptr, urdf::parseURDF(urdf_str));
+}
+
+TEST(URDF_V1_0_LEGACY, continuous_joint_no_limits_required)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="l1"/>
+      <link name="l2"/>
+      <joint name="j1" type="continuous">
+        <parent link="l1"/>
+        <child link="l2"/>
+      </joint>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  EXPECT_EQ(urdf::Joint::CONTINUOUS, model->getJoint("j1")->type);
+  EXPECT_EQ(nullptr, model->getJoint("j1")->limits);
+}
+
+TEST(URDF_V1_0_LEGACY, fixed_joint_no_limits_required)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="l1"/>
+      <link name="l2"/>
+      <joint name="j1" type="fixed">
+        <parent link="l1"/>
+        <child link="l2"/>
+      </joint>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  EXPECT_EQ(urdf::Joint::FIXED, model->getJoint("j1")->type);
+  EXPECT_EQ(nullptr, model->getJoint("j1")->limits);
+}
+
+TEST(URDF_V1_0_LEGACY, floating_joint_no_limits_required)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="l1"/>
+      <link name="l2"/>
+      <joint name="j1" type="floating">
+        <parent link="l1"/>
+        <child link="l2"/>
+      </joint>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  EXPECT_EQ(urdf::Joint::FLOATING, model->getJoint("j1")->type);
+}
+
+TEST(URDF_V1_0_LEGACY, planar_joint_no_limits_required)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="l1"/>
+      <link name="l2"/>
+      <joint name="j1" type="planar">
+        <parent link="l1"/>
+        <child link="l2"/>
+      </joint>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  EXPECT_EQ(urdf::Joint::PLANAR, model->getJoint("j1")->type);
+}
+
+TEST(URDF_V1_0_LEGACY, unknown_joint_type_fails)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="l1"/>
+      <link name="l2"/>
+      <joint name="j1" type="spring">
+        <parent link="l1"/>
+        <child link="l2"/>
+      </joint>
+    </robot>
+  )urdf";
+  EXPECT_EQ(nullptr, urdf::parseURDF(urdf_str));
+}
+
+TEST(URDF_V1_0_LEGACY, joint_without_type_attr_fails)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="l1"/>
+      <link name="l2"/>
+      <joint name="j1">
+        <parent link="l1"/>
+        <child link="l2"/>
+      </joint>
+    </robot>
+  )urdf";
+  EXPECT_EQ(nullptr, urdf::parseURDF(urdf_str));
+}
 int main(int argc, char **argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
