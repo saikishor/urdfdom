@@ -1571,6 +1571,118 @@ TEST(URDF_V1_0_LEGACY, revolute_joint_zero_effort_and_velocity_allowed_v1_0)
   EXPECT_DOUBLE_EQ(0.0, model->getJoint("j1")->limits->effort);
   EXPECT_DOUBLE_EQ(0.0, model->getJoint("j1")->limits->velocity);
 }
+
+/// @note Joint dynamics
+TEST(URDF_V1_0_LEGACY, dynamics_only_damping)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="l1"/>
+      <link name="l2"/>
+      <joint name="j1" type="fixed">
+        <parent link="l1"/>
+        <child link="l2"/>
+        <dynamics damping="5.5"/>
+      </joint>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  ASSERT_NE(nullptr, model->getJoint("j1")->dynamics);
+  EXPECT_DOUBLE_EQ(5.5, model->getJoint("j1")->dynamics->damping);
+  EXPECT_DOUBLE_EQ(0.0, model->getJoint("j1")->dynamics->friction);
+}
+
+TEST(URDF_V1_0_LEGACY, dynamics_only_friction)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="l1"/>
+      <link name="l2"/>
+      <joint name="j1" type="fixed">
+        <parent link="l1"/>
+        <child link="l2"/>
+        <dynamics friction="2.25"/>
+      </joint>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  ASSERT_NE(nullptr, model->getJoint("j1")->dynamics);
+  EXPECT_DOUBLE_EQ(0.0,  model->getJoint("j1")->dynamics->damping);
+  EXPECT_DOUBLE_EQ(2.25, model->getJoint("j1")->dynamics->friction);
+}
+
+TEST(URDF_V1_0_LEGACY, dynamics_neither_damping_nor_friction_fails)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="l1"/>
+      <link name="l2"/>
+      <joint name="j1" type="fixed">
+        <parent link="l1"/>
+        <child link="l2"/>
+        <dynamics/>
+      </joint>
+    </robot>
+  )urdf";
+  EXPECT_EQ(nullptr, urdf::parseURDF(urdf_str));
+}
+
+TEST(URDF_V1_0_LEGACY, dynamics_negative_damping_allowed_v1_0)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="l1"/>
+      <link name="l2"/>
+      <joint name="j1" type="fixed">
+        <parent link="l1"/>
+        <child link="l2"/>
+        <dynamics damping="-1.0" friction="0.0"/>
+      </joint>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  EXPECT_DOUBLE_EQ(-1.0, model->getJoint("j1")->dynamics->damping);
+}
+
+TEST(URDF_V1_0_LEGACY, dynamics_negative_friction_allowed_v1_0)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="l1"/>
+      <link name="l2"/>
+      <joint name="j1" type="fixed">
+        <parent link="l1"/>
+        <child link="l2"/>
+        <dynamics damping="0.0" friction="-0.5"/>
+      </joint>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  EXPECT_DOUBLE_EQ(-0.5, model->getJoint("j1")->dynamics->friction);
+}
+
+TEST(URDF_V1_0_LEGACY, dynamics_zero_values_allowed_v1_0)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="l1"/>
+      <link name="l2"/>
+      <joint name="j1" type="fixed">
+        <parent link="l1"/>
+        <child link="l2"/>
+        <dynamics damping="0.0" friction="0.0"/>
+      </joint>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  EXPECT_DOUBLE_EQ(0.0, model->getJoint("j1")->dynamics->damping);
+  EXPECT_DOUBLE_EQ(0.0, model->getJoint("j1")->dynamics->friction);
+}
 int main(int argc, char **argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
