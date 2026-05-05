@@ -1683,6 +1683,150 @@ TEST(URDF_V1_0_LEGACY, dynamics_zero_values_allowed_v1_0)
   EXPECT_DOUBLE_EQ(0.0, model->getJoint("j1")->dynamics->damping);
   EXPECT_DOUBLE_EQ(0.0, model->getJoint("j1")->dynamics->friction);
 }
+
+/// @note Joint safety controller
+TEST(URDF_V1_0_LEGACY, safety_k_velocity_only_other_defaults_to_zero)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="l1"/>
+      <link name="l2"/>
+      <joint name="j1" type="fixed">
+        <parent link="l1"/>
+        <child link="l2"/>
+        <safety_controller k_velocity="8.5"/>
+      </joint>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  ASSERT_NE(nullptr, model->getJoint("j1")->safety);
+  EXPECT_DOUBLE_EQ(8.5, model->getJoint("j1")->safety->k_velocity);
+  EXPECT_DOUBLE_EQ(0.0, model->getJoint("j1")->safety->k_position);
+  EXPECT_DOUBLE_EQ(0.0, model->getJoint("j1")->safety->soft_lower_limit);
+  EXPECT_DOUBLE_EQ(0.0, model->getJoint("j1")->safety->soft_upper_limit);
+}
+
+TEST(URDF_V1_0_LEGACY, safety_without_k_velocity_fails)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="l1"/>
+      <link name="l2"/>
+      <joint name="j1" type="fixed">
+        <parent link="l1"/>
+        <child link="l2"/>
+        <safety_controller k_position="1.0" soft_lower_limit="-1.0"/>
+      </joint>
+    </robot>
+  )urdf";
+  EXPECT_EQ(nullptr, urdf::parseURDF(urdf_str));
+}
+
+TEST(URDF_V1_0_LEGACY, safety_negative_soft_limits_allowed_v1_0)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="l1"/>
+      <link name="l2"/>
+      <joint name="j1" type="fixed">
+        <parent link="l1"/>
+        <child link="l2"/>
+        <safety_controller soft_lower_limit="-5.0" soft_upper_limit="-1.0"
+                           k_position="0.1" k_velocity="3.0"/>
+      </joint>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  EXPECT_DOUBLE_EQ(-5.0, model->getJoint("j1")->safety->soft_lower_limit);
+  EXPECT_DOUBLE_EQ(-1.0, model->getJoint("j1")->safety->soft_upper_limit);
+}
+
+/// @note Joint calibration
+TEST(URDF_V1_0_LEGACY, calibration_rising_only)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="l1"/>
+      <link name="l2"/>
+      <joint name="j1" type="fixed">
+        <parent link="l1"/>
+        <child link="l2"/>
+        <calibration rising="1.234"/>
+      </joint>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  ASSERT_NE(nullptr, model->getJoint("j1")->calibration);
+  ASSERT_NE(nullptr, model->getJoint("j1")->calibration->rising);
+  EXPECT_DOUBLE_EQ(1.234, *model->getJoint("j1")->calibration->rising);
+  EXPECT_EQ(nullptr, model->getJoint("j1")->calibration->falling);
+}
+
+TEST(URDF_V1_0_LEGACY, calibration_falling_only)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="l1"/>
+      <link name="l2"/>
+      <joint name="j1" type="fixed">
+        <parent link="l1"/>
+        <child link="l2"/>
+        <calibration falling="-0.567"/>
+      </joint>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  ASSERT_NE(nullptr, model->getJoint("j1")->calibration);
+  EXPECT_EQ(nullptr, model->getJoint("j1")->calibration->rising);
+  ASSERT_NE(nullptr, model->getJoint("j1")->calibration->falling);
+  EXPECT_DOUBLE_EQ(-0.567, *model->getJoint("j1")->calibration->falling);
+}
+
+TEST(URDF_V1_0_LEGACY, calibration_both_rising_and_falling)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="l1"/>
+      <link name="l2"/>
+      <joint name="j1" type="fixed">
+        <parent link="l1"/>
+        <child link="l2"/>
+        <calibration rising="0.5" falling="-0.5"/>
+      </joint>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  ASSERT_NE(nullptr, model->getJoint("j1")->calibration->rising);
+  ASSERT_NE(nullptr, model->getJoint("j1")->calibration->falling);
+  EXPECT_DOUBLE_EQ( 0.5, *model->getJoint("j1")->calibration->rising);
+  EXPECT_DOUBLE_EQ(-0.5, *model->getJoint("j1")->calibration->falling);
+}
+
+TEST(URDF_V1_0_LEGACY, calibration_no_attributes_produces_null_pointers)
+{
+  // <calibration/> with no attributes is valid — both optional.
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="l1"/>
+      <link name="l2"/>
+      <joint name="j1" type="fixed">
+        <parent link="l1"/>
+        <child link="l2"/>
+        <calibration/>
+      </joint>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  ASSERT_NE(nullptr, model->getJoint("j1")->calibration);
+  EXPECT_EQ(nullptr, model->getJoint("j1")->calibration->rising);
+  EXPECT_EQ(nullptr, model->getJoint("j1")->calibration->falling);
+}
 int main(int argc, char **argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
