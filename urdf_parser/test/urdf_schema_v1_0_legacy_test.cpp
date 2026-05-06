@@ -1987,6 +1987,227 @@ TEST(URDF_V1_0_LEGACY, parent_link_tree_is_correct)
   ASSERT_NE(nullptr, child->getParent());
   EXPECT_EQ("base", child->getParent()->name);
 }
+
+/// @note Full comprehensive v1.0 robot
+TEST(URDF_V1_0_LEGACY, full_v1_0_robot_all_features)
+{
+  // Exercises: all geometry types, inertial, materials, every joint type,
+  // dynamics, safety, calibration, mimic, origins with xyz+rpy, multiple
+  // visuals, multiple collisions, global + inline materials.
+  std::string urdf_str = R"urdf(
+    <robot name="full_robot" version="1.0">
+
+      <!-- Global material -->
+      <material name="steel">
+        <color rgba="0.5 0.5 0.5 1.0"/>
+      </material>
+      <material name="rubber">
+        <color rgba="0.1 0.1 0.1 1.0"/>
+      </material>
+
+      <!-- Root link -->
+      <link name="base_link">
+        <inertial>
+          <origin xyz="0 0 0.05" rpy="0 0 0"/>
+          <mass value="10.0"/>
+          <inertia ixx="0.1" ixy="0.0" ixz="0.0"
+                   iyy="0.1" iyz="0.0" izz="0.05"/>
+        </inertial>
+        <visual name="base_vis">
+          <origin xyz="0 0 0" rpy="0 0 0"/>
+          <geometry><box size="0.4 0.3 0.1"/></geometry>
+          <material name="steel"/>
+        </visual>
+        <collision name="base_col">
+          <geometry><box size="0.4 0.3 0.1"/></geometry>
+        </collision>
+      </link>
+
+      <!-- Revolute joint -->
+      <link name="shoulder_link">
+        <inertial>
+          <mass value="2.5"/>
+          <inertia ixx="0.01" ixy="0.0" ixz="0.0"
+                   iyy="0.01" iyz="0.0" izz="0.005"/>
+        </inertial>
+        <visual>
+          <geometry><cylinder radius="0.05" length="0.2"/></geometry>
+          <material name="">
+            <color rgba="0.8 0.2 0.1 1.0"/>
+          </material>
+        </visual>
+        <collision>
+          <geometry><cylinder radius="0.05" length="0.2"/></geometry>
+        </collision>
+      </link>
+      <joint name="shoulder_joint" type="revolute">
+        <parent link="base_link"/>
+        <child link="shoulder_link"/>
+        <origin xyz="0.2 0 0.1" rpy="0 0 0"/>
+        <axis xyz="0 1 0"/>
+        <limit lower="-1.5707963" upper="1.5707963" effort="50.0" velocity="1.0"/>
+        <dynamics damping="1.0" friction="0.1"/>
+        <safety_controller soft_lower_limit="-1.4" soft_upper_limit="1.4"
+                           k_position="10.0" k_velocity="5.0"/>
+        <calibration rising="0.0" falling="-0.1"/>
+      </joint>
+
+      <!-- Prismatic joint -->
+      <link name="elbow_link">
+        <inertial>
+          <mass value="1.0"/>
+          <inertia ixx="0.005" ixy="0.0" ixz="0.0"
+                   iyy="0.005" iyz="0.0" izz="0.002"/>
+        </inertial>
+        <visual>
+          <geometry><sphere radius="0.04"/></geometry>
+        </visual>
+      </link>
+      <joint name="elbow_joint" type="prismatic">
+        <parent link="shoulder_link"/>
+        <child link="elbow_link"/>
+        <origin xyz="0 0 0.2"/>
+        <axis xyz="0 0 1"/>
+        <limit lower="-0.1" upper="0.1" effort="20.0" velocity="0.2"/>
+        <dynamics damping="0.5" friction="0.05"/>
+      </joint>
+
+      <!-- Continuous joint -->
+      <link name="wrist_link">
+        <visual>
+          <geometry><mesh filename="package://robot/meshes/wrist.dae"/></geometry>
+        </visual>
+        <collision>
+          <geometry><sphere radius="0.03"/></geometry>
+        </collision>
+      </link>
+      <joint name="wrist_joint" type="continuous">
+        <parent link="elbow_link"/>
+        <child link="wrist_link"/>
+        <axis xyz="1 0 0"/>
+        <dynamics damping="0.2" friction="0.0"/>
+      </joint>
+
+      <!-- Fixed joint -->
+      <link name="tool_link">
+        <visual>
+          <geometry><box size="0.01 0.01 0.05"/></geometry>
+          <material name="rubber"/>
+        </visual>
+      </link>
+      <joint name="tool_joint" type="fixed">
+        <parent link="wrist_link"/>
+        <child link="tool_link"/>
+        <origin xyz="0 0 0.05" rpy="0 0 1.5707963"/>
+      </joint>
+
+      <!-- Floating joint -->
+      <link name="camera_link">
+        <visual>
+          <geometry><box size="0.05 0.05 0.02"/></geometry>
+        </visual>
+      </link>
+      <joint name="camera_joint" type="floating">
+        <parent link="base_link"/>
+        <child link="camera_link"/>
+        <origin xyz="-0.1 0 0.15"/>
+      </joint>
+
+      <!-- Planar joint with mimic -->
+      <link name="platform_link">
+        <visual>
+          <geometry><box size="0.2 0.2 0.01"/></geometry>
+        </visual>
+      </link>
+      <joint name="platform_joint" type="planar">
+        <parent link="base_link"/>
+        <child link="platform_link"/>
+        <mimic joint="shoulder_joint" multiplier="0.5" offset="0.0"/>
+      </joint>
+
+    </robot>
+  )urdf";
+
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+
+  EXPECT_EQ("full_robot", model->name_);
+  EXPECT_EQ(7u, model->links_.size());
+  EXPECT_EQ(6u, model->joints_.size());
+  ASSERT_NE(nullptr, model->root_link_);
+  EXPECT_EQ("base_link", model->root_link_->name);
+
+  // Verify global materials
+  ASSERT_NE(nullptr, model->getMaterial("steel"));
+  ASSERT_NE(nullptr, model->getMaterial("rubber"));
+
+  // base_link inertial
+  auto base = model->getLink("base_link");
+  ASSERT_NE(nullptr, base->inertial);
+  EXPECT_DOUBLE_EQ(10.0, base->inertial->mass);
+  EXPECT_DOUBLE_EQ(0.1,  base->inertial->ixx);
+  EXPECT_EQ(1u, base->visual_array.size());
+  EXPECT_EQ(1u, base->collision_array.size());
+  EXPECT_EQ(urdf::Geometry::BOX, base->visual->geometry->type);
+
+  // shoulder joint
+  auto sj = model->getJoint("shoulder_joint");
+  ASSERT_NE(nullptr, sj);
+  EXPECT_EQ(urdf::Joint::REVOLUTE, sj->type);
+  ASSERT_NE(nullptr, sj->limits);
+  EXPECT_DOUBLE_EQ(-1.5707963, sj->limits->lower);
+  EXPECT_DOUBLE_EQ( 1.5707963, sj->limits->upper);
+  EXPECT_DOUBLE_EQ(50.0, sj->limits->effort);
+  EXPECT_DOUBLE_EQ( 1.0, sj->limits->velocity);
+  ASSERT_NE(nullptr, sj->dynamics);
+  EXPECT_DOUBLE_EQ(1.0, sj->dynamics->damping);
+  EXPECT_DOUBLE_EQ(0.1, sj->dynamics->friction);
+  ASSERT_NE(nullptr, sj->safety);
+  EXPECT_DOUBLE_EQ(10.0, sj->safety->k_position);
+  EXPECT_DOUBLE_EQ( 5.0, sj->safety->k_velocity);
+  ASSERT_NE(nullptr, sj->calibration->rising);
+  EXPECT_DOUBLE_EQ(0.0, *sj->calibration->rising);
+  ASSERT_NE(nullptr, sj->calibration->falling);
+  EXPECT_DOUBLE_EQ(-0.1, *sj->calibration->falling);
+  EXPECT_TRUE(std::isinf(sj->limits->acceleration));
+  EXPECT_TRUE(std::isinf(sj->limits->deceleration));
+  EXPECT_TRUE(std::isinf(sj->limits->jerk));
+
+  // elbow joint (prismatic)
+  auto ej = model->getJoint("elbow_joint");
+  ASSERT_NE(nullptr, ej);
+  EXPECT_EQ(urdf::Joint::PRISMATIC, ej->type);
+
+  // wrist joint (continuous — no limits)
+  auto wj = model->getJoint("wrist_joint");
+  ASSERT_NE(nullptr, wj);
+  EXPECT_EQ(urdf::Joint::CONTINUOUS, wj->type);
+  EXPECT_EQ(nullptr, wj->limits);
+
+  // wrist link has mesh visual and sphere collision
+  auto wrist = model->getLink("wrist_link");
+  ASSERT_NE(nullptr, wrist);
+  ASSERT_FALSE(wrist->visual_array.empty());
+  EXPECT_EQ(urdf::Geometry::MESH, wrist->visual->geometry->type);
+  auto wrist_mesh = std::dynamic_pointer_cast<urdf::Mesh>(wrist->visual->geometry);
+  EXPECT_EQ("package://robot/meshes/wrist.dae", wrist_mesh->filename);
+
+  // tool joint (fixed)
+  EXPECT_EQ(urdf::Joint::FIXED, model->getJoint("tool_joint")->type);
+
+  // camera joint (floating)
+  EXPECT_EQ(urdf::Joint::FLOATING, model->getJoint("camera_joint")->type);
+
+  // platform joint (planar) + mimic
+  auto pj = model->getJoint("platform_joint");
+  ASSERT_NE(nullptr, pj);
+  EXPECT_EQ(urdf::Joint::PLANAR, pj->type);
+  ASSERT_NE(nullptr, pj->mimic);
+  EXPECT_EQ("shoulder_joint", pj->mimic->joint_name);
+  EXPECT_DOUBLE_EQ(0.5, pj->mimic->multiplier);
+  EXPECT_DOUBLE_EQ(0.0, pj->mimic->offset);
+}
+
 int main(int argc, char **argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
