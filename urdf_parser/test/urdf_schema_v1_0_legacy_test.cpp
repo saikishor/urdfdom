@@ -1827,6 +1827,166 @@ TEST(URDF_V1_0_LEGACY, calibration_no_attributes_produces_null_pointers)
   EXPECT_EQ(nullptr, model->getJoint("j1")->calibration->rising);
   EXPECT_EQ(nullptr, model->getJoint("j1")->calibration->falling);
 }
+
+/// @note Joint mimic
+TEST(URDF_V1_0_LEGACY, mimic_joint_name_only_uses_defaults)
+{
+  // When multiplier and offset are absent they default to 1 and 0 respectively.
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="l1"/>
+      <link name="l2"/>
+      <link name="l3"/>
+      <joint name="j1" type="fixed">
+        <parent link="l1"/>
+        <child link="l2"/>
+      </joint>
+      <joint name="j2" type="fixed">
+        <parent link="l1"/>
+        <child link="l3"/>
+        <mimic joint="j1"/>
+      </joint>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  ASSERT_NE(nullptr, model->getJoint("j2")->mimic);
+  EXPECT_EQ("j1",  model->getJoint("j2")->mimic->joint_name);
+  EXPECT_DOUBLE_EQ(1.0, model->getJoint("j2")->mimic->multiplier);
+  EXPECT_DOUBLE_EQ(0.0, model->getJoint("j2")->mimic->offset);
+}
+
+TEST(URDF_V1_0_LEGACY, mimic_with_negative_multiplier_allowed_v1_0)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="l1"/>
+      <link name="l2"/>
+      <link name="l3"/>
+      <joint name="j1" type="fixed">
+        <parent link="l1"/>
+        <child link="l2"/>
+      </joint>
+      <joint name="j2" type="fixed">
+        <parent link="l1"/>
+        <child link="l3"/>
+        <mimic joint="j1" multiplier="-2.0" offset="0.1"/>
+      </joint>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  ASSERT_NE(nullptr, model->getJoint("j2")->mimic);
+  EXPECT_DOUBLE_EQ(-2.0, model->getJoint("j2")->mimic->multiplier);
+  EXPECT_DOUBLE_EQ( 0.1, model->getJoint("j2")->mimic->offset);
+}
+
+TEST(URDF_V1_0_LEGACY, mimic_without_joint_name_fails)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="l1"/>
+      <link name="l2"/>
+      <joint name="j1" type="fixed">
+        <parent link="l1"/>
+        <child link="l2"/>
+        <mimic multiplier="1.0"/>
+      </joint>
+    </robot>
+  )urdf";
+  EXPECT_EQ(nullptr, urdf::parseURDF(urdf_str));
+}
+
+/// @note Tree / topology validation
+TEST(URDF_V1_0_LEGACY, three_link_chain_topology)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="base"/>
+      <link name="mid"/>
+      <link name="tip"/>
+      <joint name="j1" type="fixed">
+        <parent link="base"/>
+        <child link="mid"/>
+      </joint>
+      <joint name="j2" type="fixed">
+        <parent link="mid"/>
+        <child link="tip"/>
+      </joint>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  EXPECT_EQ(3u, model->links_.size());
+  EXPECT_EQ(2u, model->joints_.size());
+  ASSERT_NE(nullptr, model->root_link_);
+  EXPECT_EQ("base", model->root_link_->name);
+
+  auto base = model->getLink("base");
+  ASSERT_NE(nullptr, base);
+  EXPECT_EQ(1u, base->child_links.size());
+  EXPECT_EQ("mid", base->child_links[0]->name);
+
+  auto mid = model->getLink("mid");
+  ASSERT_NE(nullptr, mid);
+  EXPECT_EQ(1u, mid->child_links.size());
+  EXPECT_EQ("tip", mid->child_links[0]->name);
+
+  auto tip = model->getLink("tip");
+  ASSERT_NE(nullptr, tip);
+  EXPECT_EQ(0u, tip->child_links.size());
+}
+
+TEST(URDF_V1_0_LEGACY, branching_topology)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="torso"/>
+      <link name="left_arm"/>
+      <link name="right_arm"/>
+      <link name="head"/>
+      <joint name="j_left" type="fixed">
+        <parent link="torso"/>
+        <child link="left_arm"/>
+      </joint>
+      <joint name="j_right" type="fixed">
+        <parent link="torso"/>
+        <child link="right_arm"/>
+      </joint>
+      <joint name="j_head" type="fixed">
+        <parent link="torso"/>
+        <child link="head"/>
+      </joint>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  EXPECT_EQ(4u, model->links_.size());
+  EXPECT_EQ(3u, model->joints_.size());
+  ASSERT_NE(nullptr, model->root_link_);
+  EXPECT_EQ("torso", model->root_link_->name);
+  EXPECT_EQ(3u, model->getLink("torso")->child_links.size());
+}
+
+TEST(URDF_V1_0_LEGACY, parent_link_tree_is_correct)
+{
+  std::string urdf_str = R"urdf(
+    <robot name="r" version="1.0">
+      <link name="base"/>
+      <link name="child"/>
+      <joint name="j1" type="fixed">
+        <parent link="base"/>
+        <child link="child"/>
+      </joint>
+    </robot>
+  )urdf";
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  ASSERT_NE(nullptr, model);
+  auto child = model->getLink("child");
+  ASSERT_NE(nullptr, child);
+  ASSERT_NE(nullptr, child->getParent());
+  EXPECT_EQ("base", child->getParent()->name);
+}
 int main(int argc, char **argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
