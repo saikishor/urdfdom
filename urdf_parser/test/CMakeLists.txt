@@ -38,6 +38,9 @@ foreach(GTEST_SOURCE_file ${tests})
     target_link_libraries(${BINARY_NAME} pthread)
   endif()
 
+  target_compile_definitions(${BINARY_NAME} PRIVATE
+    TEST_ASSETS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/assets")
+
   add_test(NAME    ${BINARY_NAME}
            COMMAND ${BINARY_NAME}
                    --gtest_output=xml:${CMAKE_BINARY_DIR}/test_results/${BINARY_NAME}.xml)

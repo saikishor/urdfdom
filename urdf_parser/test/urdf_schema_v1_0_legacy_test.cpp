@@ -171,18 +171,8 @@ TEST(URDF_V1_0_LEGACY, two_root_links_fails)
 /// @note Link – inertial element
 TEST(URDF_V1_0_LEGACY, inertial_positive_values)
 {
-  std::string urdf_str = R"urdf(
-    <robot name="r" version="1.0">
-      <link name="base">
-        <inertial>
-          <mass value="5.25"/>
-          <inertia ixx="0.1" ixy="0.01" ixz="0.001"
-                   iyy="0.2" iyz="0.002" izz="0.3"/>
-        </inertial>
-      </link>
-    </robot>
-  )urdf";
-  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/inertial_link.urdf");
   ASSERT_NE(nullptr, model);
   auto link = model->getLink("base");
   ASSERT_NE(nullptr, link);
@@ -662,18 +652,8 @@ TEST(URDF_V1_0_LEGACY, collision_with_origin)
 
 TEST(URDF_V1_0_LEGACY, multiple_visuals_v1_0)
 {
-  std::string urdf_str = R"urdf(
-    <robot name="r" version="1.0">
-      <link name="base">
-        <visual name="v1"><geometry><sphere radius="0.1"/></geometry></visual>
-        <visual name="v2"><geometry><box size="1 1 1"/></geometry></visual>
-        <visual name="v3">
-          <geometry><cylinder radius="0.2" length="0.5"/></geometry>
-        </visual>
-      </link>
-    </robot>
-  )urdf";
-  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/multiple_geometries.urdf");
   ASSERT_NE(nullptr, model);
   auto link = model->getLink("base");
   ASSERT_EQ(3u, link->visual_array.size());
@@ -686,15 +666,8 @@ TEST(URDF_V1_0_LEGACY, multiple_visuals_v1_0)
 
 TEST(URDF_V1_0_LEGACY, multiple_collisions_v1_0)
 {
-  std::string urdf_str = R"urdf(
-    <robot name="r" version="1.0">
-      <link name="base">
-        <collision name="c1"><geometry><sphere radius="0.1"/></geometry></collision>
-        <collision name="c2"><geometry><box size="1 1 1"/></geometry></collision>
-      </link>
-    </robot>
-  )urdf";
-  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/multiple_geometries.urdf");
   ASSERT_NE(nullptr, model);
   auto link = model->getLink("base");
   ASSERT_EQ(2u, link->collision_array.size());
@@ -727,20 +700,8 @@ TEST(URDF_V1_0_LEGACY, visual_and_collision_in_same_link)
 /// @note Material parsing
 TEST(URDF_V1_0_LEGACY, global_material_with_color)
 {
-  std::string urdf_str = R"urdf(
-    <robot name="r" version="1.0">
-      <material name="blue">
-        <color rgba="0.0 0.0 1.0 1.0"/>
-      </material>
-      <link name="base">
-        <visual>
-          <geometry><sphere radius="0.1"/></geometry>
-          <material name="blue"/>
-        </visual>
-      </link>
-    </robot>
-  )urdf";
-  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/global_material.urdf");
   ASSERT_NE(nullptr, model);
   auto mat = model->getMaterial("blue");
   ASSERT_NE(nullptr, mat);
@@ -957,18 +918,8 @@ TEST(URDF_V1_0_LEGACY, quat_xyzw_ignored_in_v1_0)
 /// @note Joint types
 TEST(URDF_V1_0_LEGACY, revolute_joint_with_limits)
 {
-  std::string urdf_str = R"urdf(
-    <robot name="r" version="1.0">
-      <link name="l1"/>
-      <link name="l2"/>
-      <joint name="j1" type="revolute">
-        <parent link="l1"/>
-        <child link="l2"/>
-        <limit lower="-1.57" upper="1.57" effort="100.0" velocity="2.0"/>
-      </joint>
-    </robot>
-  )urdf";
-  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/revolute_joint.urdf");
   ASSERT_NE(nullptr, model);
   EXPECT_EQ(urdf::Joint::REVOLUTE, model->getJoint("j1")->type);
   ASSERT_NE(nullptr, model->getJoint("j1")->limits);
@@ -1900,22 +1851,8 @@ TEST(URDF_V1_0_LEGACY, mimic_without_joint_name_fails)
 /// @note Tree / topology validation
 TEST(URDF_V1_0_LEGACY, three_link_chain_topology)
 {
-  std::string urdf_str = R"urdf(
-    <robot name="r" version="1.0">
-      <link name="base"/>
-      <link name="mid"/>
-      <link name="tip"/>
-      <joint name="j1" type="fixed">
-        <parent link="base"/>
-        <child link="mid"/>
-      </joint>
-      <joint name="j2" type="fixed">
-        <parent link="mid"/>
-        <child link="tip"/>
-      </joint>
-    </robot>
-  )urdf";
-  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/three_link_chain.urdf");
   ASSERT_NE(nullptr, model);
   EXPECT_EQ(3u, model->links_.size());
   EXPECT_EQ(2u, model->joints_.size());
@@ -1939,27 +1876,8 @@ TEST(URDF_V1_0_LEGACY, three_link_chain_topology)
 
 TEST(URDF_V1_0_LEGACY, branching_topology)
 {
-  std::string urdf_str = R"urdf(
-    <robot name="r" version="1.0">
-      <link name="torso"/>
-      <link name="left_arm"/>
-      <link name="right_arm"/>
-      <link name="head"/>
-      <joint name="j_left" type="fixed">
-        <parent link="torso"/>
-        <child link="left_arm"/>
-      </joint>
-      <joint name="j_right" type="fixed">
-        <parent link="torso"/>
-        <child link="right_arm"/>
-      </joint>
-      <joint name="j_head" type="fixed">
-        <parent link="torso"/>
-        <child link="head"/>
-      </joint>
-    </robot>
-  )urdf";
-  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/branching_robot.urdf");
   ASSERT_NE(nullptr, model);
   EXPECT_EQ(4u, model->links_.size());
   EXPECT_EQ(3u, model->joints_.size());
@@ -1994,141 +1912,9 @@ TEST(URDF_V1_0_LEGACY, full_v1_0_robot_all_features)
   // Exercises: all geometry types, inertial, materials, every joint type,
   // dynamics, safety, calibration, mimic, origins with xyz+rpy, multiple
   // visuals, multiple collisions, global + inline materials.
-  std::string urdf_str = R"urdf(
-    <robot name="full_robot" version="1.0">
-
-      <!-- Global material -->
-      <material name="steel">
-        <color rgba="0.5 0.5 0.5 1.0"/>
-      </material>
-      <material name="rubber">
-        <color rgba="0.1 0.1 0.1 1.0"/>
-      </material>
-
-      <!-- Root link -->
-      <link name="base_link">
-        <inertial>
-          <origin xyz="0 0 0.05" rpy="0 0 0"/>
-          <mass value="10.0"/>
-          <inertia ixx="0.1" ixy="0.0" ixz="0.0"
-                   iyy="0.1" iyz="0.0" izz="0.05"/>
-        </inertial>
-        <visual name="base_vis">
-          <origin xyz="0 0 0" rpy="0 0 0"/>
-          <geometry><box size="0.4 0.3 0.1"/></geometry>
-          <material name="steel"/>
-        </visual>
-        <collision name="base_col">
-          <geometry><box size="0.4 0.3 0.1"/></geometry>
-        </collision>
-      </link>
-
-      <!-- Revolute joint -->
-      <link name="shoulder_link">
-        <inertial>
-          <mass value="2.5"/>
-          <inertia ixx="0.01" ixy="0.0" ixz="0.0"
-                   iyy="0.01" iyz="0.0" izz="0.005"/>
-        </inertial>
-        <visual>
-          <geometry><cylinder radius="0.05" length="0.2"/></geometry>
-          <material name="">
-            <color rgba="0.8 0.2 0.1 1.0"/>
-          </material>
-        </visual>
-        <collision>
-          <geometry><cylinder radius="0.05" length="0.2"/></geometry>
-        </collision>
-      </link>
-      <joint name="shoulder_joint" type="revolute">
-        <parent link="base_link"/>
-        <child link="shoulder_link"/>
-        <origin xyz="0.2 0 0.1" rpy="0 0 0"/>
-        <axis xyz="0 1 0"/>
-        <limit lower="-1.5707963" upper="1.5707963" effort="50.0" velocity="1.0"/>
-        <dynamics damping="1.0" friction="0.1"/>
-        <safety_controller soft_lower_limit="-1.4" soft_upper_limit="1.4"
-                           k_position="10.0" k_velocity="5.0"/>
-        <calibration rising="0.0" falling="-0.1"/>
-      </joint>
-
-      <!-- Prismatic joint -->
-      <link name="elbow_link">
-        <inertial>
-          <mass value="1.0"/>
-          <inertia ixx="0.005" ixy="0.0" ixz="0.0"
-                   iyy="0.005" iyz="0.0" izz="0.002"/>
-        </inertial>
-        <visual>
-          <geometry><sphere radius="0.04"/></geometry>
-        </visual>
-      </link>
-      <joint name="elbow_joint" type="prismatic">
-        <parent link="shoulder_link"/>
-        <child link="elbow_link"/>
-        <origin xyz="0 0 0.2"/>
-        <axis xyz="0 0 1"/>
-        <limit lower="-0.1" upper="0.1" effort="20.0" velocity="0.2"/>
-        <dynamics damping="0.5" friction="0.05"/>
-      </joint>
-
-      <!-- Continuous joint -->
-      <link name="wrist_link">
-        <visual>
-          <geometry><mesh filename="package://robot/meshes/wrist.dae"/></geometry>
-        </visual>
-        <collision>
-          <geometry><sphere radius="0.03"/></geometry>
-        </collision>
-      </link>
-      <joint name="wrist_joint" type="continuous">
-        <parent link="elbow_link"/>
-        <child link="wrist_link"/>
-        <axis xyz="1 0 0"/>
-        <dynamics damping="0.2" friction="0.0"/>
-      </joint>
-
-      <!-- Fixed joint -->
-      <link name="tool_link">
-        <visual>
-          <geometry><box size="0.01 0.01 0.05"/></geometry>
-          <material name="rubber"/>
-        </visual>
-      </link>
-      <joint name="tool_joint" type="fixed">
-        <parent link="wrist_link"/>
-        <child link="tool_link"/>
-        <origin xyz="0 0 0.05" rpy="0 0 1.5707963"/>
-      </joint>
-
-      <!-- Floating joint -->
-      <link name="camera_link">
-        <visual>
-          <geometry><box size="0.05 0.05 0.02"/></geometry>
-        </visual>
-      </link>
-      <joint name="camera_joint" type="floating">
-        <parent link="base_link"/>
-        <child link="camera_link"/>
-        <origin xyz="-0.1 0 0.15"/>
-      </joint>
-
-      <!-- Planar joint with mimic -->
-      <link name="platform_link">
-        <visual>
-          <geometry><box size="0.2 0.2 0.01"/></geometry>
-        </visual>
-      </link>
-      <joint name="platform_joint" type="planar">
-        <parent link="base_link"/>
-        <child link="platform_link"/>
-        <mimic joint="shoulder_joint" multiplier="0.5" offset="0.0"/>
-      </joint>
-
-    </robot>
-  )urdf";
-
-  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  // See test/assets/full_robot_v1_0.urdf for the URDF source.
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/full_robot_v1_0.urdf");
   ASSERT_NE(nullptr, model);
 
   EXPECT_EQ("full_robot", model->name_);
