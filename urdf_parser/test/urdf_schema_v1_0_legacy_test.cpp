@@ -53,119 +53,82 @@ TEST(URDF_V1_0_LEGACY, single_link_robot_is_valid)
 
 TEST(URDF_V1_0_LEGACY, invalid_xml_fails)
 {
-  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF("<robot name=\"bad\" version=\"1.0\"");
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_invalid_xml.urdf");
   EXPECT_EQ(nullptr, model);
 }
 
 TEST(URDF_V1_0_LEGACY, no_robot_element_fails)
 {
-  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(
-    "<not_a_robot name=\"r\"><link name=\"l\"/></not_a_robot>");
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_no_robot_element.urdf");
   EXPECT_EQ(nullptr, model);
 }
 
 TEST(URDF_V1_0_LEGACY, robot_without_name_fails)
 {
-  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(
-    "<robot version=\"1.0\"><link name=\"l\"/></robot>");
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_robot_no_name.urdf");
   EXPECT_EQ(nullptr, model);
 }
 
 TEST(URDF_V1_0_LEGACY, no_links_fails)
 {
-  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(
-    "<robot name=\"empty\" version=\"1.0\"></robot>");
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_no_links.urdf");
   EXPECT_EQ(nullptr, model);
 }
 
 TEST(URDF_V1_0_LEGACY, unsupported_version_too_high_fails)
 {
-  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(
-    "<robot name=\"r\" version=\"2.0\"><link name=\"l\"/></robot>");
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_version_too_high.urdf");
   EXPECT_EQ(nullptr, model);
 }
 
 TEST(URDF_V1_0_LEGACY, unsupported_version_too_low_fails)
 {
-  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(
-    "<robot name=\"r\" version=\"0.9\"><link name=\"l\"/></robot>");
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_version_too_low.urdf");
   EXPECT_EQ(nullptr, model);
 }
 
 TEST(URDF_V1_0_LEGACY, malformed_version_string_fails)
 {
-  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(
-    "<robot name=\"r\" version=\"one.zero\"><link name=\"l\"/></robot>");
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_malformed_version.urdf");
   EXPECT_EQ(nullptr, model);
 }
 
 TEST(URDF_V1_0_LEGACY, duplicate_link_name_fails)
 {
-  std::string urdf_str = R"urdf(
-    <robot name="dup" version="1.0">
-      <link name="base"/>
-      <link name="base"/>
-    </robot>
-  )urdf";
-  EXPECT_EQ(nullptr, urdf::parseURDF(urdf_str));
+  EXPECT_EQ(nullptr, urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_duplicate_link_name.urdf"));
 }
 
 TEST(URDF_V1_0_LEGACY, duplicate_joint_name_fails)
 {
-  std::string urdf_str = R"urdf(
-    <robot name="dup" version="1.0">
-      <link name="l1"/>
-      <link name="l2"/>
-      <link name="l3"/>
-      <joint name="j1" type="fixed">
-        <parent link="l1"/><child link="l2"/>
-      </joint>
-      <joint name="j1" type="fixed">
-        <parent link="l1"/><child link="l3"/>
-      </joint>
-    </robot>
-  )urdf";
-  EXPECT_EQ(nullptr, urdf::parseURDF(urdf_str));
+  EXPECT_EQ(nullptr, urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_duplicate_joint_name.urdf"));
 }
 
 TEST(URDF_V1_0_LEGACY, joint_referencing_unknown_parent_link_fails)
 {
-  std::string urdf_str = R"urdf(
-    <robot name="r" version="1.0">
-      <link name="child"/>
-      <joint name="j1" type="fixed">
-        <parent link="nonexistent"/>
-        <child link="child"/>
-      </joint>
-    </robot>
-  )urdf";
-  EXPECT_EQ(nullptr, urdf::parseURDF(urdf_str));
+  EXPECT_EQ(nullptr, urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_joint_unknown_parent.urdf"));
 }
 
 TEST(URDF_V1_0_LEGACY, joint_referencing_unknown_child_link_fails)
 {
-  std::string urdf_str = R"urdf(
-    <robot name="r" version="1.0">
-      <link name="base"/>
-      <joint name="j1" type="fixed">
-        <parent link="base"/>
-        <child link="nonexistent"/>
-      </joint>
-    </robot>
-  )urdf";
-  EXPECT_EQ(nullptr, urdf::parseURDF(urdf_str));
+  EXPECT_EQ(nullptr, urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_joint_unknown_child.urdf"));
 }
 
 TEST(URDF_V1_0_LEGACY, two_root_links_fails)
 {
   // Two disconnected links with no joint → two root links → initRoot fails.
-  std::string urdf_str = R"urdf(
-    <robot name="r" version="1.0">
-      <link name="root1"/>
-      <link name="root2"/>
-    </robot>
-  )urdf";
-  EXPECT_EQ(nullptr, urdf::parseURDF(urdf_str));
+  EXPECT_EQ(nullptr, urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_two_root_links.urdf"));
 }
 
 /// @note Link – inertial element
@@ -313,16 +276,10 @@ TEST(URDF_V1_0_LEGACY, box_geometry_zero_dimension_allowed_v1_0)
 
 TEST(URDF_V1_0_LEGACY, box_geometry_no_size_attr_fails)
 {
-  std::string urdf_str = R"urdf(
-    <robot name="r" version="1.0">
-      <link name="base">
-        <visual><geometry><box/></geometry></visual>
-      </link>
-    </robot>
-  )urdf";
-  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
   // parseVisual fails → parseLink returns false → but model still built (link added).
   // The link exists but has no visual.
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_box_no_size.urdf");
   ASSERT_NE(nullptr, model);
   EXPECT_TRUE(model->getLink("base")->visual_array.empty());
 }
@@ -382,14 +339,8 @@ TEST(URDF_V1_0_LEGACY, sphere_geometry_negative_radius_allowed_v1_0)
 
 TEST(URDF_V1_0_LEGACY, sphere_geometry_no_radius_attr_fails)
 {
-  std::string urdf_str = R"urdf(
-    <robot name="r" version="1.0">
-      <link name="base">
-        <visual><geometry><sphere/></geometry></visual>
-      </link>
-    </robot>
-  )urdf";
-  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_sphere_no_radius.urdf");
   ASSERT_NE(nullptr, model);
   EXPECT_TRUE(model->getLink("base")->visual_array.empty());
 }
@@ -454,28 +405,16 @@ TEST(URDF_V1_0_LEGACY, cylinder_geometry_negative_length_allowed_v1_0)
 
 TEST(URDF_V1_0_LEGACY, cylinder_geometry_no_length_attr_fails)
 {
-  std::string urdf_str = R"urdf(
-    <robot name="r" version="1.0">
-      <link name="base">
-        <visual><geometry><cylinder radius="0.5"/></geometry></visual>
-      </link>
-    </robot>
-  )urdf";
-  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_cylinder_no_length.urdf");
   ASSERT_NE(nullptr, model);
   EXPECT_TRUE(model->getLink("base")->visual_array.empty());
 }
 
 TEST(URDF_V1_0_LEGACY, cylinder_geometry_no_radius_attr_fails)
 {
-  std::string urdf_str = R"urdf(
-    <robot name="r" version="1.0">
-      <link name="base">
-        <visual><geometry><cylinder length="1.0"/></geometry></visual>
-      </link>
-    </robot>
-  )urdf";
-  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_cylinder_no_radius.urdf");
   ASSERT_NE(nullptr, model);
   EXPECT_TRUE(model->getLink("base")->visual_array.empty());
 }
@@ -547,28 +486,16 @@ TEST(URDF_V1_0_LEGACY, mesh_geometry_with_explicit_scale)
 
 TEST(URDF_V1_0_LEGACY, mesh_geometry_no_filename_fails)
 {
-  std::string urdf_str = R"urdf(
-    <robot name="r" version="1.0">
-      <link name="base">
-        <visual><geometry><mesh/></geometry></visual>
-      </link>
-    </robot>
-  )urdf";
-  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_mesh_no_filename.urdf");
   ASSERT_NE(nullptr, model);
   EXPECT_TRUE(model->getLink("base")->visual_array.empty());
 }
 
 TEST(URDF_V1_0_LEGACY, unknown_geometry_type_fails)
 {
-  std::string urdf_str = R"urdf(
-    <robot name="r" version="1.0">
-      <link name="base">
-        <visual><geometry><torus radius="1.0"/></geometry></visual>
-      </link>
-    </robot>
-  )urdf";
-  urdf::ModelInterfaceSharedPtr model = urdf::parseURDF(urdf_str);
+  urdf::ModelInterfaceSharedPtr model = urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_unknown_geometry_type.urdf");
   ASSERT_NE(nullptr, model);
   EXPECT_TRUE(model->getLink("base")->visual_array.empty());
 }
@@ -735,14 +662,8 @@ TEST(URDF_V1_0_LEGACY, global_material_with_texture)
 
 TEST(URDF_V1_0_LEGACY, duplicate_global_material_fails)
 {
-  std::string urdf_str = R"urdf(
-    <robot name="r" version="1.0">
-      <material name="red"><color rgba="1 0 0 1"/></material>
-      <material name="red"><color rgba="0.8 0 0 1"/></material>
-      <link name="base"/>
-    </robot>
-  )urdf";
-  EXPECT_EQ(nullptr, urdf::parseURDF(urdf_str));
+  EXPECT_EQ(nullptr, urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_duplicate_material.urdf"));
 }
 
 TEST(URDF_V1_0_LEGACY, inline_material_definition_in_visual)
@@ -931,17 +852,8 @@ TEST(URDF_V1_0_LEGACY, revolute_joint_with_limits)
 
 TEST(URDF_V1_0_LEGACY, revolute_joint_without_limits_fails)
 {
-  std::string urdf_str = R"urdf(
-    <robot name="r" version="1.0">
-      <link name="l1"/>
-      <link name="l2"/>
-      <joint name="j1" type="revolute">
-        <parent link="l1"/>
-        <child link="l2"/>
-      </joint>
-    </robot>
-  )urdf";
-  EXPECT_EQ(nullptr, urdf::parseURDF(urdf_str));
+  EXPECT_EQ(nullptr, urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_revolute_no_limits.urdf"));
 }
 
 TEST(URDF_V1_0_LEGACY, prismatic_joint_with_limits)
@@ -965,17 +877,8 @@ TEST(URDF_V1_0_LEGACY, prismatic_joint_with_limits)
 
 TEST(URDF_V1_0_LEGACY, prismatic_joint_without_limits_fails)
 {
-  std::string urdf_str = R"urdf(
-    <robot name="r" version="1.0">
-      <link name="l1"/>
-      <link name="l2"/>
-      <joint name="j1" type="prismatic">
-        <parent link="l1"/>
-        <child link="l2"/>
-      </joint>
-    </robot>
-  )urdf";
-  EXPECT_EQ(nullptr, urdf::parseURDF(urdf_str));
+  EXPECT_EQ(nullptr, urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_prismatic_no_limits.urdf"));
 }
 
 TEST(URDF_V1_0_LEGACY, continuous_joint_no_limits_required)
@@ -1050,32 +953,14 @@ TEST(URDF_V1_0_LEGACY, planar_joint_no_limits_required)
 
 TEST(URDF_V1_0_LEGACY, unknown_joint_type_fails)
 {
-  std::string urdf_str = R"urdf(
-    <robot name="r" version="1.0">
-      <link name="l1"/>
-      <link name="l2"/>
-      <joint name="j1" type="spring">
-        <parent link="l1"/>
-        <child link="l2"/>
-      </joint>
-    </robot>
-  )urdf";
-  EXPECT_EQ(nullptr, urdf::parseURDF(urdf_str));
+  EXPECT_EQ(nullptr, urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_unknown_joint_type.urdf"));
 }
 
 TEST(URDF_V1_0_LEGACY, joint_without_type_attr_fails)
 {
-  std::string urdf_str = R"urdf(
-    <robot name="r" version="1.0">
-      <link name="l1"/>
-      <link name="l2"/>
-      <joint name="j1">
-        <parent link="l1"/>
-        <child link="l2"/>
-      </joint>
-    </robot>
-  )urdf";
-  EXPECT_EQ(nullptr, urdf::parseURDF(urdf_str));
+  EXPECT_EQ(nullptr, urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_joint_no_type.urdf"));
 }
 
 /// @note Joint axis
@@ -1298,34 +1183,14 @@ TEST(URDF_V1_0_LEGACY, limits_zero_effort_and_velocity_allowed_v1_0)
 
 TEST(URDF_V1_0_LEGACY, limits_missing_effort_fails_v1_0)
 {
-  std::string urdf_str = R"urdf(
-    <robot name="r" version="1.0">
-      <link name="l1"/>
-      <link name="l2"/>
-      <joint name="j1" type="fixed">
-        <parent link="l1"/>
-        <child link="l2"/>
-        <limit velocity="1.0"/>
-      </joint>
-    </robot>
-  )urdf";
-  EXPECT_EQ(nullptr, urdf::parseURDF(urdf_str));
+  EXPECT_EQ(nullptr, urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_limit_no_effort.urdf"));
 }
 
 TEST(URDF_V1_0_LEGACY, limits_missing_velocity_fails_v1_0)
 {
-  std::string urdf_str = R"urdf(
-    <robot name="r" version="1.0">
-      <link name="l1"/>
-      <link name="l2"/>
-      <joint name="j1" type="fixed">
-        <parent link="l1"/>
-        <child link="l2"/>
-        <limit effort="10.0"/>
-      </joint>
-    </robot>
-  )urdf";
-  EXPECT_EQ(nullptr, urdf::parseURDF(urdf_str));
+  EXPECT_EQ(nullptr, urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_limit_no_velocity.urdf"));
 }
 
 TEST(URDF_V1_0_LEGACY, limits_large_positive_values_v1_0)
@@ -1373,34 +1238,14 @@ TEST(URDF_V1_0_LEGACY, limits_acceleration_deceleration_jerk_default_to_inf_v1_0
 
 TEST(URDF_V1_0_LEGACY, limits_invalid_effort_string_fails_v1_0)
 {
-  std::string urdf_str = R"urdf(
-    <robot name="r" version="1.0">
-      <link name="l1"/>
-      <link name="l2"/>
-      <joint name="j1" type="fixed">
-        <parent link="l1"/>
-        <child link="l2"/>
-        <limit effort="not_a_number" velocity="1.0"/>
-      </joint>
-    </robot>
-  )urdf";
-  EXPECT_EQ(nullptr, urdf::parseURDF(urdf_str));
+  EXPECT_EQ(nullptr, urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_limit_effort_not_number.urdf"));
 }
 
 TEST(URDF_V1_0_LEGACY, limits_invalid_velocity_string_fails_v1_0)
 {
-  std::string urdf_str = R"urdf(
-    <robot name="r" version="1.0">
-      <link name="l1"/>
-      <link name="l2"/>
-      <joint name="j1" type="fixed">
-        <parent link="l1"/>
-        <child link="l2"/>
-        <limit effort="10.0" velocity="fast"/>
-      </joint>
-    </robot>
-  )urdf";
-  EXPECT_EQ(nullptr, urdf::parseURDF(urdf_str));
+  EXPECT_EQ(nullptr, urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_limit_velocity_not_number.urdf"));
 }
 
 TEST(URDF_V1_0_LEGACY, revolute_joint_limits_lower_greater_than_upper_allowed_v1_0)
@@ -1566,18 +1411,8 @@ TEST(URDF_V1_0_LEGACY, dynamics_only_friction)
 
 TEST(URDF_V1_0_LEGACY, dynamics_neither_damping_nor_friction_fails)
 {
-  std::string urdf_str = R"urdf(
-    <robot name="r" version="1.0">
-      <link name="l1"/>
-      <link name="l2"/>
-      <joint name="j1" type="fixed">
-        <parent link="l1"/>
-        <child link="l2"/>
-        <dynamics/>
-      </joint>
-    </robot>
-  )urdf";
-  EXPECT_EQ(nullptr, urdf::parseURDF(urdf_str));
+  EXPECT_EQ(nullptr, urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_dynamics_empty.urdf"));
 }
 
 TEST(URDF_V1_0_LEGACY, dynamics_negative_damping_allowed_v1_0)
@@ -1660,18 +1495,8 @@ TEST(URDF_V1_0_LEGACY, safety_k_velocity_only_other_defaults_to_zero)
 
 TEST(URDF_V1_0_LEGACY, safety_without_k_velocity_fails)
 {
-  std::string urdf_str = R"urdf(
-    <robot name="r" version="1.0">
-      <link name="l1"/>
-      <link name="l2"/>
-      <joint name="j1" type="fixed">
-        <parent link="l1"/>
-        <child link="l2"/>
-        <safety_controller k_position="1.0" soft_lower_limit="-1.0"/>
-      </joint>
-    </robot>
-  )urdf";
-  EXPECT_EQ(nullptr, urdf::parseURDF(urdf_str));
+  EXPECT_EQ(nullptr, urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_safety_no_k_velocity.urdf"));
 }
 
 TEST(URDF_V1_0_LEGACY, safety_negative_soft_limits_allowed_v1_0)
@@ -1834,18 +1659,8 @@ TEST(URDF_V1_0_LEGACY, mimic_with_negative_multiplier_allowed_v1_0)
 
 TEST(URDF_V1_0_LEGACY, mimic_without_joint_name_fails)
 {
-  std::string urdf_str = R"urdf(
-    <robot name="r" version="1.0">
-      <link name="l1"/>
-      <link name="l2"/>
-      <joint name="j1" type="fixed">
-        <parent link="l1"/>
-        <child link="l2"/>
-        <mimic multiplier="1.0"/>
-      </joint>
-    </robot>
-  )urdf";
-  EXPECT_EQ(nullptr, urdf::parseURDF(urdf_str));
+  EXPECT_EQ(nullptr, urdf::parseURDFFile(
+    std::string(TEST_ASSETS_DIR) + "/bad_mimic_no_joint_name.urdf"));
 }
 
 /// @note Tree / topology validation
