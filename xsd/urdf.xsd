@@ -208,10 +208,10 @@
 
   <!-- limit node type -->
   <xs:complexType name="limit">
-    <xs:attribute name="lower" type="xs:double" default="0" />
-    <xs:attribute name="upper" type="xs:double" default="0" />
-    <xs:attribute name="effort" type="xs:double" default="0" />
-    <xs:attribute name="velocity" type="xs:double" default="0" />
+    <xs:attribute name="lower" type="xs:double" default="-INF" />
+    <xs:attribute name="upper" type="xs:double" default="INF" />
+    <xs:attribute name="effort" type="xs:double" default="INF" />
+    <xs:attribute name="velocity" type="xs:double" default="INF" />
     <xs:attribute name="acceleration" type="xs:double" default="INF" />
     <xs:attribute name="deceleration" type="xs:double" default="INF" />
     <xs:attribute name="jerk" type="xs:double" default="INF" />

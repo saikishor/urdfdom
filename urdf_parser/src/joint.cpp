@@ -96,15 +96,25 @@ bool parseJointDynamics(JointDynamics &jd, tinyxml2::XMLElement* config)
 
 bool parseJointLimits(JointLimits &jl, tinyxml2::XMLElement* config,
                       const urdf_export_helpers::URDFVersion version,
-                      const std::string& joint_name)
+                      const std::string& joint_name, int joint_type)
 {
   jl.clear();
 
   // Get lower joint limit
+  bool lower_pos_limit = true;
+  bool upper_pos_limit = true;
   const char* lower_str = config->Attribute("lower");
   if (lower_str == NULL){
-    CONSOLE_BRIDGE_logDebug("urdfdom.joint_limit: joint [%s] has no lower, defaults to 0", joint_name.c_str());
-    jl.lower = 0;
+    if (version.less_than(1, 2))
+    {
+      jl.lower = 0.0;
+    }
+    else
+    {
+      jl.lower = -std::numeric_limits<double>::infinity();
+    }
+    CONSOLE_BRIDGE_logInform("urdfdom.joint_limit: joint [%s] has no lower, defaults to %f", joint_name.c_str(), jl.lower);
+    lower_pos_limit = false;
   }
   else
   {
@@ -119,8 +129,16 @@ bool parseJointLimits(JointLimits &jl, tinyxml2::XMLElement* config,
   // Get upper joint limit
   const char* upper_str = config->Attribute("upper");
   if (upper_str == NULL){
-    CONSOLE_BRIDGE_logDebug("urdfdom.joint_limit: joint [%s] has no upper, defaults to 0", joint_name.c_str());
-    jl.upper = 0;
+    if (version.less_than(1, 2))
+    {
+      jl.upper = 0.0;
+    }
+    else
+    {
+      jl.upper = std::numeric_limits<double>::infinity();
+    }
+    CONSOLE_BRIDGE_logInform("urdfdom.joint_limit: joint [%s] has no upper position limit, defaults to %f", joint_name.c_str(), jl.upper);
+    upper_pos_limit = false;
   }
   else
   {
@@ -132,11 +150,37 @@ bool parseJointLimits(JointLimits &jl, tinyxml2::XMLElement* config,
     }
   }
 
+  if (version.at_least(1, 2))
+  {
+    if(!lower_pos_limit || !upper_pos_limit)
+    {
+      if (joint_type == Joint::REVOLUTE || joint_type == Joint::PRISMATIC)
+      {
+        CONSOLE_BRIDGE_logError("joint [%s]: revolute and prismatic joints must have both lower and upper position limits specified in URDF version 1.2 or later", joint_name.c_str());
+        return false;
+      }
+    }
+
+    if (lower_pos_limit && upper_pos_limit && jl.upper < jl.lower)
+    {
+      CONSOLE_BRIDGE_logError("joint [%s]: upper position limit (%f) cannot be smaller than lower position limit (%f)", joint_name.c_str(), jl.upper, jl.lower);
+      return false;
+    }
+  }
+
   // Get joint effort limit
   const char* effort_str = config->Attribute("effort");
   if (effort_str == NULL){
-    CONSOLE_BRIDGE_logError("joint [%s]: limit has no effort", joint_name.c_str());
-    return false;
+    if (version.less_than(1, 2))
+    {
+      CONSOLE_BRIDGE_logError("joint [%s]: limit has no effort", joint_name.c_str());
+      return false;
+    }
+    else
+    {
+      jl.effort = std::numeric_limits<double>::infinity();
+      CONSOLE_BRIDGE_logInform("urdfdom.joint_limit: joint [%s] has no effort limit, defaults to %f", joint_name.c_str(), jl.effort);
+    }
   }
   else
   {
@@ -156,8 +200,16 @@ bool parseJointLimits(JointLimits &jl, tinyxml2::XMLElement* config,
   // Get joint velocity limit
   const char* velocity_str = config->Attribute("velocity");
   if (velocity_str == NULL){
-    CONSOLE_BRIDGE_logError("joint [%s]: limit has no velocity", joint_name.c_str());
-    return false;
+    if (version.less_than(1, 2))
+    {
+      CONSOLE_BRIDGE_logError("joint [%s]: limit has no velocity", joint_name.c_str());
+      return false;
+    }
+    else
+    {
+      jl.velocity = std::numeric_limits<double>::infinity();
+      CONSOLE_BRIDGE_logInform("urdfdom.joint_limit: joint [%s] has no velocity limit, defaults to %f", joint_name.c_str(), jl.velocity);
+    }
   }
   else
   {
@@ -543,7 +595,7 @@ bool parseJoint(Joint &joint, tinyxml2::XMLElement* config,
   if (limit_xml)
   {
     joint.limits.reset(new JointLimits());
-    if (!parseJointLimits(*joint.limits, limit_xml, version, joint.name))
+    if (!parseJointLimits(*joint.limits, limit_xml, version, joint.name, joint.type))
     {
       CONSOLE_BRIDGE_logError("Could not parse limit element for joint [%s]", joint.name.c_str());
       joint.limits.reset();
