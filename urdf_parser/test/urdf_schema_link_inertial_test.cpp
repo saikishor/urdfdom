@@ -27,12 +27,12 @@ TEST(URDF_SCHEMA_LINK_INERTIAL, inertial_positive_values)
   ASSERT_NE(nullptr, link);
   ASSERT_NE(nullptr, link->inertial);
   EXPECT_DOUBLE_EQ(5.25,  link->inertial->mass);
-  EXPECT_DOUBLE_EQ(0.1,   link->inertial->ixx);
+  EXPECT_DOUBLE_EQ(0.2,   link->inertial->ixx);
   EXPECT_DOUBLE_EQ(0.01,  link->inertial->ixy);
   EXPECT_DOUBLE_EQ(0.001, link->inertial->ixz);
-  EXPECT_DOUBLE_EQ(0.2,   link->inertial->iyy);
+  EXPECT_DOUBLE_EQ(0.3,   link->inertial->iyy);
   EXPECT_DOUBLE_EQ(0.002, link->inertial->iyz);
-  EXPECT_DOUBLE_EQ(0.3,   link->inertial->izz);
+  EXPECT_DOUBLE_EQ(0.4,   link->inertial->izz);
 }
 
 TEST(URDF_SCHEMA_LINK_INERTIAL, inertial_negative_mass_allowed_v1_0)

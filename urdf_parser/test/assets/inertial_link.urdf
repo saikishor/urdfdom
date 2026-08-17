@@ -8,8 +8,8 @@
   <link name="base">
     <inertial>
       <mass value="5.25"/>
-      <inertia ixx="0.1" ixy="0.01" ixz="0.001"
-               iyy="0.2" iyz="0.002" izz="0.3"/>
+      <inertia ixx="0.2" ixy="0.01" ixz="0.001"
+               iyy="0.3" iyz="0.002" izz="0.4"/>
     </inertial>
   </link>
 
